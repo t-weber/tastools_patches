@@ -1,0 +1,1586 @@
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/file/file.h tlibs/file/file.h
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/file/file.h	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/file/file.h	2016-06-18 20:28:28.945811735 +0200
+@@ -52,7 +52,7 @@
+ 	return fs::file_size(fs::path(strFile));
+ }
+ template<>
+-std::size_t get_file_size(const std::basic_string<typename fs::path::value_type>& strFile)
++inline std::size_t get_file_size(const std::basic_string<typename fs::path::value_type>& strFile)
+ {
+ 	return fs::file_size(fs::path(strFile));
+ }
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/file/loadinstr.h tlibs/file/loadinstr.h
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/file/loadinstr.h	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/file/loadinstr.h	2016-06-18 18:49:41.391059642 +0200
+@@ -1,6 +1,6 @@
+-/*
++/**
+  * Loads instrument-specific data files
+- * @author tweber
++ * @author Tobias Weber
+  * @date feb-2015
+  * @license GPLv2 or GPLv3
+  */
+@@ -417,11 +417,6 @@
+ 		virtual std::string GetScanCommand() const override;
+ };
+ 
+-
+-
+-// for legacy compatibility
+-using FileInstr = FileInstrBase<>;
+-
+ }
+ 
+ #ifdef TLIBS_INC_HDR_IMPLS
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/fit/funcmod.h tlibs/fit/funcmod.h
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/fit/funcmod.h	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/fit/funcmod.h	2016-06-18 21:29:07.913659543 +0200
+@@ -14,70 +14,68 @@
+ 
+ // parametric function
+ template<class t_vec = boost::numeric::ublas::vector<double>, class T = typename t_vec::value_type>
+-class FunctionModel_param_gen
++class FunctionModel_param
+ {
+ public:
+-	virtual ~FunctionModel_param_gen() = default;
++	virtual ~FunctionModel_param() = default;
+ 
+ 	// t = 0..1
+ 	virtual t_vec operator()(T t) const = 0;
+ 	virtual const char* GetModelName() const = 0;
+ };
+ 
+-typedef class FunctionModel_param_gen<boost::numeric::ublas::vector<double>> FunctionModel_param;
+-
+ 
+ // ----------------------------------------------------------------------------
+ 
+ 
+ // explicit function
+-template<class T = double> class FunctionModel_gen
++template<class T = double> class FunctionModel
+ {
+ public:
+-	virtual ~FunctionModel_gen() = default;
++	virtual ~FunctionModel() = default;
+ 
+ 	virtual T operator()(T x) const = 0;
+ 	virtual const char* GetModelName() const = 0;
+ };
+ 
+ // synonym
+-template<class T=double> using FunctionModel = class FunctionModel_gen<T>;
++//template<class T=double> using FunctionModel_gen = class FunctionModel<T>;
+ 
+ 
+ // ----------------------------------------------------------------------------
+ 
+ 
+ // explicit function with multiple internal parameter sets
+-template<class T = double> class FunctionModel_multi_gen : public FunctionModel_gen<T>
++template<class T = double> class FunctionModel_multi : public FunctionModel<T>
+ {
+ public:
+-	virtual ~FunctionModel_multi_gen() = default;
++	virtual ~FunctionModel_multi() = default;
+ 
+ 	virtual std::size_t GetParamSetCount() const = 0;
+ 	virtual void SetParamSet(std::size_t iSet) = 0;
+ };
+ 
+ // synonym
+-template<class T=double> using FunctionModel_multi = class FunctionModel_multi_gen<T>;
++//template<class T=double> using FunctionModel_multi_gen = class FunctionModel_multi<T>;
+ 
+ 
+ // ----------------------------------------------------------------------------
+ 
+ 
+ // interface for n dimensional function
+-template<class T = double> class FunctionModel_nd_gen
++template<class T = double> class FunctionModel_nd
+ {
+ protected:
+ 
+ public:
+-	virtual ~FunctionModel_nd_gen() = default;
++	virtual ~FunctionModel_nd() = default;
+ 
+ 	virtual T operator()(const T* px) const = 0;
+ 	virtual const char* GetModelName() const = 0;
+ };
+ 
+-// synonyme
+-template<class T=double> using FunctionModel_nd = class FunctionModel_nd_gen<T>;
++// synonym
++//template<class T=double> using FunctionModel_nd_gen = class FunctionModel_nd<T>;
+ 
+ 
+ 
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/fit/interpolation.h tlibs/fit/interpolation.h
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/fit/interpolation.h	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/fit/interpolation.h	2016-06-18 21:14:07.342697207 +0200
+@@ -94,7 +94,7 @@
+ 
+ 
+ template<typename T=double>
+-class Bezier : public FunctionModel_param_gen<ublas::vector<T>>
++class Bezier : public FunctionModel_param<ublas::vector<T>>
+ {
+ 	protected:
+ 		ublas::vector<T> *m_pvecs;
+@@ -110,7 +110,7 @@
+ 
+ 
+ template<typename T=double>
+-class BSpline : public FunctionModel_param_gen<ublas::vector<T>>
++class BSpline : public FunctionModel_param<ublas::vector<T>>
+ {
+ 	protected:
+ 		ublas::vector<T> *m_pvecs;
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/fit/minuit.h tlibs/fit/minuit.h
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/fit/minuit.h	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/fit/minuit.h	2016-06-18 21:28:11.743661892 +0200
+@@ -122,7 +122,7 @@
+ 
+ // generic chi^2 calculation
+ template<class t_real = t_real_min>
+-class Chi2Function_gen : public ROOT::Minuit2::FCNBase
++class Chi2Function : public ROOT::Minuit2::FCNBase
+ {
+ protected:
+ 	const MinuitFuncModel *m_pfkt;
+@@ -136,13 +136,13 @@
+ 	bool m_bDebug = 0;
+ 
+ public:
+-	Chi2Function_gen(const MinuitFuncModel* fkt=0,
++	Chi2Function(const MinuitFuncModel* fkt=0,
+ 		std::size_t uiLen=0, const t_real *px=0,
+ 		const t_real *py=0, const t_real *pdy=0)
+ 		: m_pfkt(fkt), m_uiLen(uiLen), m_px(px), m_py(py), m_pdy(pdy)
+ 	{}
+ 
+-	virtual ~Chi2Function_gen() {}
++	virtual ~Chi2Function() {}
+ 
+ 	/*
+ 	 * chi^2 calculation
+@@ -178,9 +178,6 @@
+ 	void SetDebug(bool b) { m_bDebug = b; }
+ };
+ 
+-// for most cases data type of measured values and internal data type is the same: t_real_min
+-using Chi2Function = Chi2Function_gen<t_real_min>;
+-
+ 
+ // ----------------------------------------------------------------------------
+ 
+@@ -190,7 +187,7 @@
+  * function can additionally have multiple parameter sets
+  */
+ template<class t_real = t_real_min, template<class...> class t_cont=std::vector>
+-class Chi2Function_mult_gen : public ROOT::Minuit2::FCNBase
++class Chi2Function_mult : public ROOT::Minuit2::FCNBase
+ {
+ protected:
+ 	t_cont<const MinuitMultiFuncModel<t_real>*> m_vecFkt;
+@@ -204,8 +201,8 @@
+ 	bool m_bDebug = 0;
+ 
+ public:
+-	Chi2Function_mult_gen() = default;
+-	virtual ~Chi2Function_mult_gen() = default;
++	Chi2Function_mult() = default;
++	virtual ~Chi2Function_mult() = default;
+ 
+ 	void AddFunc(const MinuitMultiFuncModel<t_real>* pMod, std::size_t iNumDat,
+ 		const t_real *pX, const t_real *pY, const t_real *pdY)
+@@ -285,7 +282,7 @@
+ };
+ 
+ // for most cases data type of measured values and internal data type is the same: t_real_min
+-using Chi2FunctionMult = Chi2Function_mult_gen<t_real_min, std::vector>;
++using Chi2FunctionMult = Chi2Function_mult<t_real_min, std::vector>;
+ 
+ 
+ // ----------------------------------------------------------------------------
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/gfx/gnuplot.cpp tlibs/gfx/gnuplot.cpp
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/gfx/gnuplot.cpp	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/gfx/gnuplot.cpp	2016-06-18 21:16:33.808691082 +0200
+@@ -10,9 +10,9 @@
+ 
+ namespace tl
+ {
+-	template struct PlotObj_gen<double>;
+-	//template struct PlotObj_gen<float>;
++	template struct PlotObj<double>;
++	//template struct PlotObj<float>;
+ 
+-	template class GnuPlot_gen<double>;
+-	//template class GnuPlot_gen<float>;
++	template class GnuPlot<double>;
++	//template class GnuPlot<float>;
+ }
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/gfx/gnuplot.h tlibs/gfx/gnuplot.h
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/gfx/gnuplot.h	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/gfx/gnuplot.h	2016-06-18 21:16:26.846691373 +0200
+@@ -25,7 +25,7 @@
+ };
+ 
+ template<class t_real = double>
+-struct PlotObj_gen
++struct PlotObj
+ {
+ 	std::vector<t_real> vecX, vecY;
+ 	std::vector<t_real> vecErrX, vecErrY;
+@@ -37,13 +37,13 @@
+ 	boost::optional<t_real> odSize;
+ 	boost::optional<unsigned int> oiColor;
+ 
+-	PlotObj_gen() = default;
+-	~PlotObj_gen() = default;
++	PlotObj() = default;
++	~PlotObj() = default;
+ };
+ 
+ 
+ template<class t_real = double>
+-class GnuPlot_gen
++class GnuPlot
+ {
+ protected:
+ 	FILE *m_pipe = nullptr;
+@@ -51,7 +51,7 @@
+ 	std::unique_ptr<boost::iostreams::stream_buffer<boost::iostreams::file_descriptor_sink>> m_psbuf;
+ 	std::unique_ptr<std::ostream> m_postr;
+ 
+-	std::vector<PlotObj_gen<t_real>> m_vecObjs;
++	std::vector<PlotObj<t_real>> m_vecObjs;
+ 	// has to be 0 to show plot
+ 	int m_iStartCounter = 0;
+ 
+@@ -70,8 +70,8 @@
+ 	void RefreshVars();
+ 
+ public:
+-	GnuPlot_gen() = default;
+-	virtual ~GnuPlot_gen() { DeInit(); }
++	GnuPlot() = default;
++	virtual ~GnuPlot() { DeInit(); }
+ 
+ 	void Init();
+ 	void DeInit();
+@@ -84,7 +84,7 @@
+ 	void SetCmdFileOutput(const char* pcFile);
+ 
+ 	void StartPlot();
+-	void AddLine(const PlotObj_gen<t_real>& obj);
++	void AddLine(const PlotObj<t_real>& obj);
+ 	void FinishPlot();
+ 
+ 	void SimplePlot(const std::vector<t_real>& vecX, const std::vector<t_real>& vecY,
+@@ -113,9 +113,6 @@
+ 	void SetLegendPlace(const std::string& strPlace) { m_strLegendPlacement = strPlace; }
+ };
+ 
+-
+-	using PlotObj = PlotObj_gen<>;
+-	using GnuPlot = GnuPlot_gen<>;
+ }
+ 
+ 
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/gfx/gnuplot_impl.h tlibs/gfx/gnuplot_impl.h
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/gfx/gnuplot_impl.h	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/gfx/gnuplot_impl.h	2016-06-18 21:16:42.071690736 +0200
+@@ -26,7 +26,7 @@
+ namespace ios = boost::iostreams;
+ 
+ template<class t_real>
+-void GnuPlot_gen<t_real>::DeInit()
++void GnuPlot<t_real>::DeInit()
+ {
+ 	m_postr.reset();
+ 	m_psbuf.reset();
+@@ -39,7 +39,7 @@
+ }
+ 
+ template<class t_real>
+-void GnuPlot_gen<t_real>::Init()
++void GnuPlot<t_real>::Init()
+ {
+ 	if(IsReady()) return;
+ 	DeInit();
+@@ -63,7 +63,7 @@
+ }
+ 
+ template<class t_real>
+-void GnuPlot_gen<t_real>::SetTerminal(int iWnd, const char* pcBackend)
++void GnuPlot<t_real>::SetTerminal(int iWnd, const char* pcBackend)
+ {
+ 	if(m_bTermLocked) return;
+ 
+@@ -81,7 +81,7 @@
+ }
+ 
+ template<class t_real>
+-void GnuPlot_gen<t_real>::SetFileTerminal(const char* pcFile)
++void GnuPlot<t_real>::SetFileTerminal(const char* pcFile)
+ {
+ 	if(m_bTermLocked) return;
+ 
+@@ -107,7 +107,7 @@
+ }
+ 
+ template<class t_real>
+-void GnuPlot_gen<t_real>::RefreshVars()
++void GnuPlot<t_real>::RefreshVars()
+ {
+ 	if(m_bHasLegend)
+ 		(*m_postr) << "set key on " << m_strLegendPlacement
+@@ -117,7 +117,7 @@
+ }
+ 
+ template<class t_real>
+-void GnuPlot_gen<t_real>::SimplePlot(const std::vector<t_real>& vecX, const std::vector<t_real>& vecY,
++void GnuPlot<t_real>::SimplePlot(const std::vector<t_real>& vecX, const std::vector<t_real>& vecY,
+ 	const std::vector<t_real>& vecYErr, const std::vector<t_real>& vecXErr,
+ 	LineStyle style)
+ {
+@@ -145,7 +145,7 @@
+ 
+ 
+ template<class t_real>
+-void GnuPlot_gen<t_real>::SimplePlot2d(const std::vector<std::vector<t_real> >& vec,
++void GnuPlot<t_real>::SimplePlot2d(const std::vector<std::vector<t_real> >& vec,
+ 	t_real dMinX, t_real dMaxX, t_real dMinY, t_real dMaxY)
+ {
+ 	if(!IsReady()) return;
+@@ -217,13 +217,13 @@
+ }
+ 
+ template<class t_real>
+-void GnuPlot_gen<t_real>::AddLine(const PlotObj_gen<t_real>& obj)
++void GnuPlot<t_real>::AddLine(const PlotObj<t_real>& obj)
+ {
+ 	m_vecObjs.push_back(obj);
+ }
+ 
+ template<class t_real>
+-void GnuPlot_gen<t_real>::StartPlot()
++void GnuPlot<t_real>::StartPlot()
+ {
+ 	if(!IsReady()) return;
+ 
+@@ -234,13 +234,13 @@
+ }
+ 
+ template<class t_real>
+-void GnuPlot_gen<t_real>::SetCmdFileOutput(const char* pcFile)
++void GnuPlot<t_real>::SetCmdFileOutput(const char* pcFile)
+ {
+ 	m_strCmdFileOutput = pcFile;
+ }
+ 
+ template<class t_real>
+-void GnuPlot_gen<t_real>::FinishPlot()
++void GnuPlot<t_real>::FinishPlot()
+ {
+ 	if(!IsReady()) return;
+ 
+@@ -270,14 +270,14 @@
+ }
+ 
+ template<class t_real>
+-std::string GnuPlot_gen<t_real>::BuildCmd()
++std::string GnuPlot<t_real>::BuildCmd()
+ {
+ 	m_bHasLegend = 0;
+ 
+ 	std::ostringstream ostr;
+ 	ostr << "plot ";
+ 
+-	for(const PlotObj_gen<t_real>& obj : m_vecObjs)
++	for(const PlotObj<t_real>& obj : m_vecObjs)
+ 	{
+ 		const bool bConnectLines = (obj.linestyle != STYLE_POINTS);
+ 		const bool bHasXErr = (obj.vecErrX.size() != 0);
+@@ -341,7 +341,7 @@
+ 	}
+ 	ostr << "\n";
+ 
+-	for(const PlotObj_gen<t_real>& obj : m_vecObjs)
++	for(const PlotObj<t_real>& obj : m_vecObjs)
+ 	{
+ 		std::string strTab = BuildTable(obj.vecX, obj.vecY, obj.vecErrY, obj.vecErrX);
+ 		ostr << strTab;
+@@ -351,7 +351,7 @@
+ }
+ 
+ template<class t_real>
+-std::string GnuPlot_gen<t_real>::BuildTable(const std::vector<t_real>& vecX, const std::vector<t_real>& vecY,
++std::string GnuPlot<t_real>::BuildTable(const std::vector<t_real>& vecX, const std::vector<t_real>& vecY,
+ 	const std::vector<t_real>& vecYErr, const std::vector<t_real>& vecXErr)
+ {
+ 	std::ostringstream ostr;
+@@ -375,7 +375,7 @@
+ }
+ 
+ template<class t_real>
+-void GnuPlot_gen<t_real>::SetXLabel(const char* pcLab)
++void GnuPlot<t_real>::SetXLabel(const char* pcLab)
+ {
+ 	if(!IsReady()) return;
+ 	(*m_postr) << "set xlabel \"" << pcLab << "\"\n";
+@@ -383,7 +383,7 @@
+ }
+ 
+ template<class t_real>
+-void GnuPlot_gen<t_real>::SetYLabel(const char* pcLab)
++void GnuPlot<t_real>::SetYLabel(const char* pcLab)
+ {
+ 	if(!IsReady()) return;
+ 	(*m_postr) << "set ylabel \"" << pcLab << "\"\n";
+@@ -391,7 +391,7 @@
+ }
+ 
+ template<class t_real>
+-void GnuPlot_gen<t_real>::SetTitle(const char* pcTitle)
++void GnuPlot<t_real>::SetTitle(const char* pcTitle)
+ {
+ 	if(!IsReady()) return;
+ 	(*m_postr) << "set title \"" << pcTitle << "\"\n";
+@@ -399,7 +399,7 @@
+ }
+ 
+ template<class t_real>
+-void GnuPlot_gen<t_real>::SetXRange(t_real dMin, t_real dMax)
++void GnuPlot<t_real>::SetXRange(t_real dMin, t_real dMax)
+ {
+ 	if(!IsReady()) return;
+ 	//std::cout << "xmin: "  << dMin << ", xmax: " << dMax << std::endl;
+@@ -408,7 +408,7 @@
+ }
+ 
+ template<class t_real>
+-void GnuPlot_gen<t_real>::SetYRange(t_real dMin, t_real dMax)
++void GnuPlot<t_real>::SetYRange(t_real dMin, t_real dMax)
+ {
+ 	if(!IsReady()) return;
+ 	(*m_postr) << "set yrange [" << dMin << ":" << dMax << "]\n";
+@@ -416,7 +416,7 @@
+ }
+ 
+ template<class t_real>
+-void GnuPlot_gen<t_real>::SetLogX(t_real tBase)
++void GnuPlot<t_real>::SetLogX(t_real tBase)
+ {
+ 	if(!IsReady()) return;
+ 	if(tBase >= 0.)
+@@ -427,7 +427,7 @@
+ }
+ 
+ template<class t_real>
+-void GnuPlot_gen<t_real>::SetLogY(t_real tBase)
++void GnuPlot<t_real>::SetLogY(t_real tBase)
+ {
+ 	if(!IsReady()) return;
+ 	if(tBase >= 0.)
+@@ -438,7 +438,7 @@
+ }
+ 
+ template<class t_real>
+-void GnuPlot_gen<t_real>::SetGrid(bool bOn)
++void GnuPlot<t_real>::SetGrid(bool bOn)
+ {
+ 	if(!IsReady()) return;
+ 
+@@ -451,7 +451,7 @@
+ }
+ 
+ template<class t_real>
+-void GnuPlot_gen<t_real>::AddArrow(t_real dX0, t_real dY0, t_real dX1, t_real dY1, bool bHead)
++void GnuPlot<t_real>::AddArrow(t_real dX0, t_real dY0, t_real dX1, t_real dY1, bool bHead)
+ {
+ 	if(!IsReady()) return;
+ 
+@@ -465,7 +465,7 @@
+ }
+ 
+ template<class t_real>
+-void GnuPlot_gen<t_real>::SetColorBarRange(t_real dMin, t_real dMax, bool bCyclic)
++void GnuPlot<t_real>::SetColorBarRange(t_real dMin, t_real dMax, bool bCyclic)
+ {
+ 	if(!IsReady()) return;
+ 
+@@ -480,10 +480,10 @@
+ }
+ 
+ template<class t_real>
+-bool GnuPlot_gen<t_real>::IsReady() const { return m_postr!=0; }
++bool GnuPlot<t_real>::IsReady() const { return m_postr!=0; }
+ 
+ template<class t_real>
+-std::ostream& GnuPlot_gen<t_real>::GetStream() { return *m_postr; }
++std::ostream& GnuPlot<t_real>::GetStream() { return *m_postr; }
+ 
+ }
+ 
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/math/fourier.cpp tlibs/math/fourier.cpp
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/math/fourier.cpp	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/math/fourier.cpp	2016-06-18 21:17:26.158688892 +0200
+@@ -10,6 +10,6 @@
+ 
+ namespace tl {
+ 
+-template class Fourier_gen<double>;
++template class Fourier<double>;
+ 
+ }
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/math/fourier.h tlibs/math/fourier.h
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/math/fourier.h	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/math/fourier.h	2016-06-18 21:17:10.442689550 +0200
+@@ -19,7 +19,7 @@
+ namespace tl {
+ 
+ template<class t_real>
+-class Fourier_gen
++class Fourier
+ {
+ protected:
+ 	std::size_t m_iSize;
+@@ -31,9 +31,9 @@
+ #endif
+ 
+ public:
+-	Fourier_gen(std::size_t iSize) : m_iSize(iSize), m_dft(m_iSize)
++	Fourier(std::size_t iSize) : m_iSize(iSize), m_dft(m_iSize)
+ 	{}
+-	virtual ~Fourier_gen() = default;
++	virtual ~Fourier() = default;
+ 
+ 	void fft(const t_real *pRealIn, const t_real *pImagIn,
+ 		t_real *pRealOut, t_real *pImagOut)
+@@ -44,8 +44,6 @@
+ 	{ m_dft.trafo(pRealIn, pImagIn, pRealOut, pImagOut, 1); }
+ };
+ 
+-using Fourier = Fourier_gen<double>;
+-
+ }
+ 
+ #endif
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/math/geo.h tlibs/math/geo.h
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/math/geo.h	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/math/geo.h	2016-06-18 10:29:57.632755312 +0200
+@@ -365,7 +365,7 @@
+ 	{}
+ 	Quadric(const t_mat& Q) : m_Q(Q) {}
+ 	Quadric(const t_mat& Q, /*const t_vec& r,*/ T s)
+-			: m_Q(Q), /*m_r(r),*/ m_s(s) {}
++		: m_Q(Q), /*m_r(r),*/ m_s(s) {}
+ 	virtual ~Quadric() {}
+ 
+ 	void SetDim(std::size_t iDim) { m_Q.resize(iDim, iDim, 1); }
+@@ -503,17 +503,17 @@
+ 	{
+ 		this->m_Q(0,0) =
+ 		this->m_Q(1,1) =
+-		this->m_Q(2,2) = 1./(r*r);
++		this->m_Q(2,2) = T(1.)/(r*r);
+ 
+-		this->m_s = -1.;
++		this->m_s = T(-1.);
+ 	}
+ 
+ 	QuadSphere(std::size_t iDim, T r) : Quadric<T>(iDim)
+ 	{
+ 		for(std::size_t i=0; i<iDim; ++i)
+-			this->m_Q(i,i) = 1./(r*r);
++			this->m_Q(i,i) = T(1.)/(r*r);
+ 
+-		this->m_s = -1.;
++		this->m_s = T(-1.);
+ 	}
+ 
+ 	// only valid in principal axis system
+@@ -535,27 +535,27 @@
+ 
+ 	QuadEllipsoid(T a, T b) : Quadric<T>(2)
+ 	{
+-		this->m_Q(0,0) = 1./(a*a);
+-		this->m_Q(1,1) = 1./(b*b);
++		this->m_Q(0,0) = T(1)/(a*a);
++		this->m_Q(1,1) = T(1)/(b*b);
+ 
+ 		this->m_s = -1.;
+ 	}
+ 
+ 	QuadEllipsoid(T a, T b, T c) : Quadric<T>(3)
+ 	{
+-		this->m_Q(0,0) = 1./(a*a);
+-		this->m_Q(1,1) = 1./(b*b);
+-		this->m_Q(2,2) = 1./(c*c);
++		this->m_Q(0,0) = T(1)/(a*a);
++		this->m_Q(1,1) = T(1)/(b*b);
++		this->m_Q(2,2) = T(1)/(c*c);
+ 
+ 		this->m_s = -1.;
+ 	}
+ 
+ 	QuadEllipsoid(T a, T b, T c, T d) : Quadric<T>(4)
+ 	{
+-		this->m_Q(0,0) = 1./(a*a);
+-		this->m_Q(1,1) = 1./(b*b);
+-		this->m_Q(2,2) = 1./(c*c);
+-		this->m_Q(3,3) = 1./(d*d);
++		this->m_Q(0,0) = T(1)/(a*a);
++		this->m_Q(1,1) = T(1)/(b*b);
++		this->m_Q(2,2) = T(1)/(c*c);
++		this->m_Q(3,3) = T(1)/(d*d);
+ 
+ 		this->m_s = -1.;
+ 	}
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/math/linalg2.h tlibs/math/linalg2.h
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/math/linalg2.h	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/math/linalg2.h	2016-06-18 20:10:58.124855683 +0200
+@@ -23,7 +23,7 @@
+ 
+ #ifdef NO_LAPACK
+ 
+-template<typename T=double>
++template<typename T/*=double*/>
+ bool qr(const ublas::matrix<T>& M, ublas::matrix<T>& Q, ublas::matrix<T>& R)
+ {
+ 	return qr_decomp(M, Q, R);
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/math/linalg.h tlibs/math/linalg.h
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/math/linalg.h	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/math/linalg.h	2016-06-18 19:26:59.082966055 +0200
+@@ -653,9 +653,14 @@
+ }
+ 
+ 
++// -> linalg2.h
++template<typename T=double>
++bool qr(const ublas::matrix<T>& M, ublas::matrix<T>& Q, ublas::matrix<T>& R);
++
++
+ template<typename T>
+ bool solve_linear_approx(const ublas::matrix<T>& M, const ublas::vector<T>& v,
+-				ublas::vector<T>& x);
++	ublas::vector<T>& x);
+ 
+ // solve Mx = v for x
+ template<typename T=double>
+@@ -1200,8 +1205,7 @@
+ 	using t_vecvec = typename std::remove_reference<decltype(vecVals)>::type;
+ 	using t_innervec_org = decltype(vecVals[0]);
+ 	using t_innervec = typename std::remove_const<
+-						typename std::remove_reference<t_innervec_org>::type>
+-								::type;
++		typename std::remove_reference<t_innervec_org>::type>::type;
+ 
+ 	t_innervec vecMean = mean_value<t_vecvec>(vecVals);
+ 	//std::cout << "Mean: " << vecMean << std::endl;
+@@ -1227,7 +1231,6 @@
+ 		tSum += tprob;
+ 	}
+ 	matCov /= tSum;
+-
+ 	return matCov;
+ }
+ 
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/math/math.h tlibs/math/math.h
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/math/math.h	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/math/math.h	2016-06-18 10:43:31.525776417 +0200
+@@ -325,7 +325,8 @@
+ template<class T=double>
+ T gauss_model(T x, T x0, T sigma, T amp, T offs)
+ {
+-	return amp * std::exp(-0.5 * ((x-x0)/sigma)*((x-x0)/sigma)) + offs;
++	T norm = T(1)/(std::sqrt(2*get_pi<T>()) * sigma);
++	return amp * norm * std::exp(-0.5 * ((x-x0)/sigma)*((x-x0)/sigma)) + offs;
+ }
+ 
+ 
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/math/neutrons.h tlibs/math/neutrons.h
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/math/neutrons.h	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/math/neutrons.h	2016-06-18 20:40:09.823782422 +0200
+@@ -42,8 +42,8 @@
+ 	template<class T=double> T t_E2KSQ = T(1)/t_KSQ2E<T>;
+ #endif
+ 
+-static const double KSQ2E = (co::hbar*co::hbar / (2.*co::m_n)) / one_meV / (angstrom*angstrom);
+-static const double E2KSQ = 1./KSQ2E;
++//static const double KSQ2E = (co::hbar*co::hbar / (2.*co::m_n)) / one_meV / (angstrom*angstrom);
++//static const double E2KSQ = 1./KSQ2E;
+ 
+ // --------------------------------------------------------------------------------
+ 
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/math/units.h tlibs/math/units.h
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/math/units.h	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/math/units.h	2016-06-16 11:04:44.373436086 +0200
+@@ -26,6 +26,8 @@
+ 
+ #include <boost/numeric/ublas/vector.hpp>
+ 
++#include "math.h"
++
+ 
+ namespace tl {
+ 
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/net/tcp.cpp tlibs/net/tcp.cpp
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/net/tcp.cpp	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/net/tcp.cpp	2016-06-18 18:56:51.382041659 +0200
+@@ -1,4 +1,4 @@
+-/*
++/**
+  * TcpClient
+  * @author tweber
+  * @date aug-2014
+@@ -11,5 +11,5 @@
+ #include "tcp.h"
+ #include "tcp_impl.h"
+ 
+-template class tl::TcpTxtClient_gen<>;
+-template class tl::TcpTxtServer_gen<>;
++template class tl::TcpTxtClient<>;
++template class tl::TcpTxtServer<>;
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/net/tcp.h tlibs/net/tcp.h
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/net/tcp.h	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/net/tcp.h	2016-06-18 18:56:30.243042543 +0200
+@@ -1,4 +1,4 @@
+-/*
++/**
+  * TcpClient
+  * @author tweber
+  * @date aug-2014
+@@ -30,7 +30,7 @@
+ 
+ 
+ template<class t_ch=char, class t_str=std::basic_string<t_ch>>
+-class TcpTxtClient_gen
++class TcpTxtClient
+ {
+ public:
+ 	static bool get_cmd_tokens(const t_str& str, const t_str& strDelim,
+@@ -56,8 +56,8 @@
+ 	t_sigConn m_sigConn;
+ 
+ public:
+-	TcpTxtClient_gen();
+-	virtual ~TcpTxtClient_gen();
++	TcpTxtClient();
++	virtual ~TcpTxtClient();
+ 	void set_delim(const t_str& strDelim) { m_strCmdDelim = strDelim; }
+ 
+ 	void add_receiver(const typename t_sigRecv::slot_type& conn);
+@@ -78,7 +78,7 @@
+ 
+ 
+ template<class t_ch=char, class t_str=std::basic_string<t_ch>>
+-class TcpTxtServer_gen : public TcpTxtClient_gen<t_ch, t_str>
++class TcpTxtServer : public TcpTxtClient<t_ch, t_str>
+ {
+ protected:
+ 	ip::tcp::endpoint* m_pendpoint = nullptr;
+@@ -90,8 +90,8 @@
+ 	t_sigServerStart m_sigServerStart;
+ 
+ public:
+-	TcpTxtServer_gen();
+-	virtual ~TcpTxtServer_gen();
++	TcpTxtServer();
++	virtual ~TcpTxtServer();
+ 
+ 	virtual void disconnect(bool bAlwaysSendSignal=0) override;
+ 	bool start_server(unsigned short iPort);
+@@ -99,11 +99,6 @@
+ 	void add_server_start(const typename t_sigServerStart::slot_type& start);
+ };
+ 
+-
+-// for legacy compatibility
+-using TcpClient = TcpTxtClient_gen<>;
+-using TcpServer = TcpTxtServer_gen<>;
+-
+ }
+ 
+ #ifdef TLIBS_INC_HDR_IMPLS
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/net/tcp_impl.h tlibs/net/tcp_impl.h
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/net/tcp_impl.h	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/net/tcp_impl.h	2016-06-18 18:56:40.472042115 +0200
+@@ -1,4 +1,4 @@
+-/*
++/**
+  * TcpClient
+  * @author tweber
+  * @date aug-2014
+@@ -19,7 +19,7 @@
+ namespace tl {
+ 
+ template<class t_ch, class t_str>
+-bool TcpTxtClient_gen<t_ch, t_str>::get_cmd_tokens(const t_str& str, const t_str& strDelim,
++bool TcpTxtClient<t_ch, t_str>::get_cmd_tokens(const t_str& str, const t_str& strDelim,
+ 	std::vector<t_str>& vecStr, t_str& strRemainder)
+ {
+ 	boost::char_separator<t_ch> delim(strDelim.c_str(), "", boost::keep_empty_tokens);
+@@ -53,11 +53,11 @@
+ 
+ 
+ template<class t_ch, class t_str>
+-TcpTxtClient_gen<t_ch, t_str>::TcpTxtClient_gen() : m_listWriteBuffer(1024)
++TcpTxtClient<t_ch, t_str>::TcpTxtClient() : m_listWriteBuffer(1024)
+ {}
+ 
+ template<class t_ch, class t_str>
+-TcpTxtClient_gen<t_ch, t_str>::~TcpTxtClient_gen()
++TcpTxtClient<t_ch, t_str>::~TcpTxtClient()
+ {
+ 	disconnect();
+ 
+@@ -71,7 +71,7 @@
+ }
+ 
+ template<class t_ch, class t_str>
+-bool TcpTxtClient_gen<t_ch, t_str>::connect(const t_str& strHost, const t_str& strService)
++bool TcpTxtClient<t_ch, t_str>::connect(const t_str& strHost, const t_str& strService)
+ {
+ 	m_strHost = strHost;
+ 	m_strService = strService;
+@@ -127,7 +127,7 @@
+ }
+ 
+ template<class t_ch, class t_str>
+-void TcpTxtClient_gen<t_ch, t_str>::disconnect(bool bAlwaysSendSignal)
++void TcpTxtClient<t_ch, t_str>::disconnect(bool bAlwaysSendSignal)
+ {
+ 	const bool bConnected = is_connected();
+ 	if(bConnected)
+@@ -154,21 +154,21 @@
+ }
+ 
+ template<class t_ch, class t_str>
+-bool TcpTxtClient_gen<t_ch, t_str>::is_connected()
++bool TcpTxtClient<t_ch, t_str>::is_connected()
+ {
+ 	if(!m_psock) return 0;
+ 	return m_psock->is_open();
+ }
+ 
+ template<class t_ch, class t_str>
+-void TcpTxtClient_gen<t_ch, t_str>::wait()
++void TcpTxtClient<t_ch, t_str>::wait()
+ {
+ 	if(m_pthread)
+ 		m_pthread->join();
+ }
+ 
+ template<class t_ch, class t_str>
+-void TcpTxtClient_gen<t_ch, t_str>::write(const t_str& str)
++void TcpTxtClient<t_ch, t_str>::write(const t_str& str)
+ {
+ 	//tl::log_debug("write: ", str);
+ 	try
+@@ -190,7 +190,7 @@
+ }
+ 
+ template<class t_ch, class t_str>
+-void TcpTxtClient_gen<t_ch, t_str>::flush_write()
++void TcpTxtClient<t_ch, t_str>::flush_write()
+ {
+ 	const t_str* pstr = nullptr;
+ 	if(m_listWriteBuffer.empty()) return;
+@@ -216,7 +216,7 @@
+ }
+ 
+ template<class t_ch, class t_str>
+-void TcpTxtClient_gen<t_ch, t_str>::read_loop()
++void TcpTxtClient<t_ch, t_str>::read_loop()
+ {
+ 	static const std::size_t iBufLen = 512;
+ 	static t_ch pcBuf[iBufLen];
+@@ -256,19 +256,19 @@
+ // --------------------------------------------------------------------------------
+ // Signals
+ template<class t_ch, class t_str>
+-void TcpTxtClient_gen<t_ch, t_str>::add_receiver(const typename t_sigRecv::slot_type& conn)
++void TcpTxtClient<t_ch, t_str>::add_receiver(const typename t_sigRecv::slot_type& conn)
+ {
+ 	m_sigRecv.connect(conn);
+ }
+ 
+ template<class t_ch, class t_str>
+-void TcpTxtClient_gen<t_ch, t_str>::add_disconnect(const typename t_sigDisconn::slot_type& disconn)
++void TcpTxtClient<t_ch, t_str>::add_disconnect(const typename t_sigDisconn::slot_type& disconn)
+ {
+ 	m_sigDisconn.connect(disconn);
+ }
+ 
+ template<class t_ch, class t_str>
+-void TcpTxtClient_gen<t_ch, t_str>::add_connect(const typename t_sigConn::slot_type& conn)
++void TcpTxtClient<t_ch, t_str>::add_connect(const typename t_sigConn::slot_type& conn)
+ {
+ 	m_sigConn.connect(conn);
+ }
+@@ -279,27 +279,27 @@
+ 
+ 
+ template<class t_ch, class t_str>
+-TcpTxtServer_gen<t_ch, t_str>::TcpTxtServer_gen()
+-	: TcpTxtClient_gen<t_ch, t_str>()
++TcpTxtServer<t_ch, t_str>::TcpTxtServer()
++	: TcpTxtClient<t_ch, t_str>()
+ {}
+ 
+ template<class t_ch, class t_str>
+-TcpTxtServer_gen<t_ch, t_str>::~TcpTxtServer_gen()
++TcpTxtServer<t_ch, t_str>::~TcpTxtServer()
+ {}
+ 
+ template<class t_ch, class t_str>
+-void TcpTxtServer_gen<t_ch, t_str>::disconnect(bool bAlwaysSendSignal)
++void TcpTxtServer<t_ch, t_str>::disconnect(bool bAlwaysSendSignal)
+ {
+ 	if(this->is_connected())
+ 	{}
+ 	if(m_pacceptor) { delete m_pacceptor; m_pacceptor = nullptr; }
+ 	if(m_pendpoint) { delete m_pendpoint; m_pendpoint = nullptr; }
+ 
+-	TcpTxtClient_gen<t_ch, t_str>::disconnect(bAlwaysSendSignal);
++	TcpTxtClient<t_ch, t_str>::disconnect(bAlwaysSendSignal);
+ }
+ 
+ template<class t_ch, class t_str>
+-bool TcpTxtServer_gen<t_ch, t_str>::start_server(unsigned short iPort)
++bool TcpTxtServer<t_ch, t_str>::start_server(unsigned short iPort)
+ {
+ 	this->m_strHost = "localhost";
+ 	this->m_strService = tl::var_to_str(iPort);
+@@ -357,7 +357,7 @@
+ // --------------------------------------------------------------------------------
+ // Signals
+ template<class t_ch, class t_str>
+-void TcpTxtServer_gen<t_ch, t_str>::add_server_start(const typename t_sigServerStart::slot_type& conn)
++void TcpTxtServer<t_ch, t_str>::add_server_start(const typename t_sigServerStart::slot_type& conn)
+ {
+ 	m_sigServerStart.connect(conn);
+ }
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/script/lang/node.h tlibs/script/lang/node.h
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/script/lang/node.h	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/script/lang/node.h	2016-06-18 21:33:59.809647335 +0200
+@@ -139,8 +139,8 @@
+ 		if(m_pExpr) delete m_pExpr;
+ 	}
+ 
+-	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const;
+-	virtual Node* clone() const;
++	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const override;
++	virtual Node* clone() const override;
+ 
+ 	Node* GetExpr() const { return m_pExpr; }
+ 
+@@ -157,8 +157,8 @@
+ 	virtual ~NodeBreak()
+ 	{}
+ 
+-	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const;
+-	virtual Node* clone() const;
++	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const override;
++	virtual Node* clone() const override;
+ 
+ 	virtual Node* optimize() override;
+ };
+@@ -173,8 +173,8 @@
+ 	virtual ~NodeContinue()
+ 	{}
+ 
+-	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const;
+-	virtual Node* clone() const;
++	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const override;
++	virtual Node* clone() const override;
+ 
+ 	virtual Node* optimize() override;
+ };
+@@ -195,8 +195,8 @@
+ 		if(m_pDefArg) delete m_pDefArg;
+ 	}
+ 
+-	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const;
+-	virtual Node* clone() const;
++	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const override;
++	virtual Node* clone() const override;
+ 
+ 	void SetDefArg(Node *pDefArg) { m_pDefArg = pDefArg; }
+ 	const Node* GetDefArg() const { return m_pDefArg; }
+@@ -225,8 +225,8 @@
+ 		if(m_pArgs) delete m_pArgs;
+ 	}
+ 
+-	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const;
+-	virtual Node* clone() const;
++	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const override;
++	virtual Node* clone() const override;
+ 
+ 	Node* GetIdent() const { return m_pIdent; }
+ 	Node* GetArgs() const { return m_pArgs; }
+@@ -260,8 +260,8 @@
+ 		if(m_pElse) delete m_pElse;
+ 	}
+ 
+-	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const;
+-	virtual Node* clone() const;
++	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const override;
++	virtual Node* clone() const override;
+ 
+ 	Node* GetExpr() const { return m_pExpr; }
+ 	Node* GetIf() const { return m_pIf; }
+@@ -291,8 +291,8 @@
+ 		if(m_pStmt) delete m_pStmt;
+ 	}
+ 
+-	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const;
+-	virtual Node* clone() const;
++	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const override;
++	virtual Node* clone() const override;
+ 
+ 	Node* GetExpr() const { return m_pExpr; }
+ 	Node* GetStmt() const { return m_pStmt; }
+@@ -327,8 +327,8 @@
+ 		if(m_pStmt) delete m_pStmt;
+ 	}
+ 
+-	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const;
+-	virtual Node* clone() const;
++	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const override;
++	virtual Node* clone() const override;
+ 
+ 	Node* GetExprInit() const { return m_pExprInit; }
+ 	Node* GetExprCond() const { return m_pExprCond; }
+@@ -362,8 +362,8 @@
+ 		if(m_pStmt) delete m_pStmt;
+ 	}
+ 
+-	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const;
+-	virtual Node* clone() const;
++	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const override;
++	virtual Node* clone() const override;
+ 
+ 	Node* GetIdent() const { return m_pIdent; }
+ 	Node* GetExpr() const { return m_pExpr; }
+@@ -383,8 +383,8 @@
+ 		if(m_pSymbol) delete m_pSymbol;
+ 	}
+ 
+-	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const;
+-	virtual Node* clone() const;
++	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const override;
++	virtual Node* clone() const override;
+ 
+ 	virtual Node* optimize() override;
+ 	SymbolReal* GetSym() { return m_pSymbol; }
+@@ -403,8 +403,8 @@
+ 		if(m_pSymbol) delete m_pSymbol;
+ 	}
+ 
+-	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const;
+-	virtual Node* clone() const;
++	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const override;
++	virtual Node* clone() const override;
+ 
+ 	virtual Node* optimize() override;
+ 	SymbolInt* GetSym() { return m_pSymbol; }
+@@ -423,8 +423,8 @@
+ 		if(m_pSymbol) delete m_pSymbol;
+ 	}
+ 
+-	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const;
+-	virtual Node* clone() const;
++	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const override;
++	virtual Node* clone() const override;
+ 
+ 	virtual Node* optimize() override;
+ 	SymbolString* GetSym() { return m_pSymbol; }
+@@ -449,8 +449,8 @@
+ 		if(m_pArr) delete m_pArr;
+ 	}
+ 
+-	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const;
+-	virtual Node* clone() const;
++	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const override;
++	virtual Node* clone() const override;
+ 
+ 	Node* GetArr() const { return m_pArr; }
+ 
+@@ -473,8 +473,8 @@
+ 		if(m_pMap) delete m_pMap;
+ 	}
+ 
+-	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const;
+-	virtual Node* clone() const;
++	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const override;
++	virtual Node* clone() const override;
+ 
+ 	Node* GetMap() const { return m_pMap; }
+ 
+@@ -498,8 +498,8 @@
+ 		if(m_pSecond) delete m_pSecond;
+ 	}
+ 
+-	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const;
+-	virtual Node* clone() const;
++	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const override;
++	virtual Node* clone() const override;
+ 
+ 	Node* GetFirst() const { return m_pFirst; }
+ 	Node* GetSecond() const { return m_pSecond; }
+@@ -536,8 +536,8 @@
+ 	void GetRangeIndices(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym,
+ 		t_int iMaxLen, t_int& iBeginIdx, t_int& iEndIdx);
+ 
+-	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const;
+-	virtual Node* clone() const;
++	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const override;
++	virtual Node* clone() const override;
+ 
+ 	RangeType GetRangeType() const { return m_rangetype; }
+ 	Node* GetBegin() const { return m_pBegin; }
+@@ -564,8 +564,8 @@
+ 		if(m_pExpr) delete m_pExpr;
+ 	}
+ 
+-	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const;
+-	virtual Node* clone() const;
++	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const override;
++	virtual Node* clone() const override;
+ 
+ 	Node* GetIdent() const { return m_pIdent; }
+ 	Node* GetExpr() const { return m_pExpr; }
+@@ -595,8 +595,8 @@
+ 		if(m_pChild) delete m_pChild;
+ 	}
+ 
+-	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const;
+-	virtual Node* clone() const;
++	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const override;
++	virtual Node* clone() const override;
+ 
+ 	Node* GetChild() const { return m_pChild; }
+ 
+@@ -623,7 +623,7 @@
+ 		if(m_pRight && ((void*)m_pRight)!=((void*)m_pLeft)) delete m_pRight;
+ 	}
+ 
+-	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const;
++	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const override;
+ 	virtual Symbol* eval_assign(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0, 
+ 		Node* pLeft=0, Node *pRight=0, Symbol* pSymRightAlt=0, 
+ 		const bool *pbGlob=0) const;
+@@ -632,7 +632,7 @@
+ 	virtual Symbol* eval_recursive(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const;
+ 	virtual Symbol* eval_sequential(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const;
+ 
+-	virtual Node* clone() const;
++	virtual Node* clone() const override;
+ 
+ 	void FlattenNodes(NodeType ntype);
+ 	std::vector<Node*> flatten(NodeType ntype=NODE_ARGS) const;
+@@ -672,8 +672,8 @@
+ 		if(m_pStmts) delete m_pStmts;
+ 	}
+ 
+-	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const;
+-	virtual Node* clone() const;
++	virtual Symbol* eval(ParseInfo &info, RuntimeInfo& runinfo, SymbolTable *pSym=0) const override;
++	virtual Node* clone() const override;
+ 
+ 	Node* GetIdent() const { return m_pIdent; }
+ 	Node* GetArgs() const { return m_pArgs; }
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/script/lang/symbol.h tlibs/script/lang/symbol.h
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/script/lang/symbol.h	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/script/lang/symbol.h	2016-06-18 21:35:10.924644361 +0200
+@@ -179,8 +179,8 @@
+ 	virtual t_real GetValDouble() const override { return m_dVal; }
+ 	virtual t_complex GetValComplex() const override { return t_complex(m_dVal, 0.); }
+ 
+-	static const int GetDefPrec() { return m_defprec; }
+-	static const int GetPrec() { return m_prec; }
++	static int GetDefPrec() { return m_defprec; }
++	static int GetPrec() { return m_prec; }
+ 	static void SetPrec(int iPrec) { m_prec = iPrec; }
+ 
+ 	void SetVal(t_real dVal) { m_dVal = dVal; }
+@@ -302,8 +302,8 @@
+ 	virtual t_real GetValDouble() const override { throw tl::Err("Cannot convert complex to scalar type."); /*return GetValReal();*/ }
+ 	virtual t_complex GetValComplex() const override { return m_val; }
+ 
+-	static const int GetDefPrec() { return m_defprec; }
+-	static const int GetPrec() { return m_prec; }
++	static int GetDefPrec() { return m_defprec; }
++	static int GetPrec() { return m_prec; }
+ 	static void SetPrec(int iPrec) { m_prec = iPrec; }
+ 
+ 	void SetVal(t_real dReal, t_real dImag) { m_val=t_complex(dReal, dImag); }
+@@ -458,25 +458,25 @@
+ 
+ #include <type_traits>
+ 
+-template<typename T> static T convert_symbol(const Symbol* pSym)
++template<typename T> static inline T convert_symbol(const Symbol* pSym)
+ { std::cerr << "Error: Invalid symbol conversion." << std::endl; return T(); }
+ 
+-template<> t_string convert_symbol<t_string>(const Symbol* pSym)
++template<> inline t_string convert_symbol<t_string>(const Symbol* pSym)
+ { return pSym->print(); }
+-template<>  t_real convert_symbol<t_real>(const Symbol* pSym)
++template<> inline t_real convert_symbol<t_real>(const Symbol* pSym)
+ { return pSym->GetValDouble(); }
+-template<> t_int convert_symbol<t_int>(const Symbol* pSym)
++template<> inline t_int convert_symbol<t_int>(const Symbol* pSym)
+ { return pSym->GetValInt(); }
+ 
+ 
+-template<typename T> static Symbol* create_symbol(const T& t)
++template<typename T> static inline Symbol* create_symbol(const T& t)
+ { G_CERR << "Error: Invalid symbol creation." << std::endl; return 0; }
+ 
+-template<> Symbol* create_symbol<t_real>(const t_real& t)
++template<> inline Symbol* create_symbol<t_real>(const t_real& t)
+ { return new SymbolReal(t); }
+-template<> Symbol* create_symbol<t_int>(const t_int& t)
++template<> inline Symbol* create_symbol<t_int>(const t_int& t)
+ { return new SymbolInt(t); }
+-template<> Symbol* create_symbol<t_string>(const t_string& t)
++template<> inline Symbol* create_symbol<t_string>(const t_string& t)
+ { return new SymbolString(t); }
+ 
+ 
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/script/runtime/calls_fit.cpp tlibs/script/runtime/calls_fit.cpp
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/script/runtime/calls_fit.cpp	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/script/runtime/calls_fit.cpp	2016-06-18 21:17:49.003687937 +0200
+@@ -383,7 +383,7 @@
+ 	unsigned int iSize = std::min<unsigned int>(vecX.size(), vecY.size());
+ 	iSize = std::min<unsigned int>(iSize, vecYErr.size());
+ 
+-	tl::Chi2Function_gen<t_real> chi2fkt(&mod, iSize, vecX.data(), vecY.data(), vecYErr.data());
++	tl::Chi2Function<t_real> chi2fkt(&mod, iSize, vecX.data(), vecY.data(), vecYErr.data());
+ 	chi2fkt.SetSigma(dSigma);
+ 
+ 
+@@ -671,7 +671,7 @@
+ 
+ 	unsigned int iSize = std::min(vecX.size(), vecY.size());
+ 
+-	tl::FunctionModel_param_gen<ublas::vector<t_real>>* pfkt = 0;
++	tl::FunctionModel_param<ublas::vector<t_real>>* pfkt = 0;
+ 	if(whichfkt == FKT_SPLINE)
+ 		pfkt = new tl::BSpline<t_real>(iSize, vecX.data(), vecY.data(), ideg);
+ 	else if(whichfkt == FKT_BEZIER)
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/script/runtime/calls_math.cpp tlibs/script/runtime/calls_math.cpp
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/script/runtime/calls_math.cpp	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/script/runtime/calls_math.cpp	2016-06-18 21:47:46.147612775 +0200
+@@ -179,7 +179,7 @@
+ 	}
+ 	else
+ 	{
+-		if(vecSyms[0]->GetType() == SYMBOL_COMPLEX || (FKT_C && !FKT))
++		if(vecSyms[0]->GetType() == SYMBOL_COMPLEX || (FKT_C!=nullptr && FKT==nullptr))
+ 		{
+ 			if(FKT_C == nullptr)
+ 			{
+@@ -388,8 +388,8 @@
+ 	ParseInfo& info, RuntimeInfo &runinfo, SymbolTable* pSymTab,
+ 	bool bInv)
+ {
+-	void (tl::Fourier_gen<t_real>::*pFkt)(const t_real*, const t_real*, t_real*, t_real*)
+-		= (bInv ? &tl::Fourier_gen<t_real>::ifft : &tl::Fourier_gen<t_real>::fft);
++	void (tl::Fourier<t_real>::*pFkt)(const t_real*, const t_real*, t_real*, t_real*)
++		= (bInv ? &tl::Fourier<t_real>::ifft : &tl::Fourier<t_real>::fft);
+ 
+ 	bool bArgsOk=1;
+ 	std::vector<t_real> vecRealIn, vecImagIn;
+@@ -437,7 +437,7 @@
+ 	vecRealOut.resize(vecRealIn.size());
+ 	vecImagOut.resize(vecImagIn.size());
+ 
+-	tl::Fourier_gen<t_real> fourier(vecRealIn.size());
++	tl::Fourier<t_real> fourier(vecRealIn.size());
+ 	(fourier.*pFkt)(vecRealIn.data(), vecImagIn.data(),
+ 		vecRealOut.data(), vecImagOut.data());
+ 
+@@ -763,6 +763,44 @@
+ 	return pRet;
+ }
+ 
++static Symbol* fkt_tensor_product(const std::vector<Symbol*>& vecSyms,
++	ParseInfo& info, RuntimeInfo &runinfo, SymbolTable* pSymTab)
++{
++	if(!check_args(runinfo, vecSyms, {SYMBOL_ANY, SYMBOL_ANY}, {0,0}, "tensor_prod"))
++		return 0;
++
++	Symbol* pRet = 0;
++
++	unsigned int iCols1, iRows1, iCols2, iRows2;
++	bool bFirstIsMat = is_mat(vecSyms[0], &iCols1, &iRows1);
++	bool bSecondIsMat = is_mat(vecSyms[1], &iCols2, &iRows2);
++
++	if(bFirstIsMat && bSecondIsMat)
++	{
++		if(iCols1!=iRows2 /*|| iCols1!=iRows2*/)
++		{
++			tl::log_err(linenr(runinfo), "Row and column counts of matrices do not match: ",
++				"Rows: ", iRows1, ", ", iRows2, 
++				", columns: ", iCols1, ", ", iCols2, ".");
++			return 0;
++		}
++
++		t_mat<t_real> mat1 = sym_to_mat<t_mat, t_vec>(vecSyms[0]);
++		t_mat<t_real> mat2 = sym_to_mat<t_mat, t_vec>(vecSyms[1]);
++
++		t_mat<t_real> matProd = tl::tensor_prod(mat1, mat2);
++		pRet = mat_to_sym<t_mat>(matProd);
++	}
++
++	if(!pRet)
++	{
++		std::ostringstream ostrErr;
++		ostrErr << linenr(runinfo) << "Invalid call to tensor_prod." << std::endl;
++		throw tl::Err(ostrErr.str(),0);
++	}
++	return pRet;
++}
++
+ // --------------------------------------------------------------------------------
+ 
+ 
+@@ -1160,8 +1198,9 @@
+ 		t_mapFkts::value_type(T_STR"inv", fkt_inverse),
+ 		t_mapFkts::value_type(T_STR"det", fkt_determinant),
+ 
+-		// matrix-vector operations
++		// matrix-vector or matrix-matrix operations
+ 		t_mapFkts::value_type(T_STR"prod", fkt_product),
++		t_mapFkts::value_type(T_STR"tensor_prod", fkt_tensor_product),
+ 
+ 		// advanced linalg
+ 		t_mapFkts::value_type(T_STR"eigenvecs", fkt_eigenvecs),
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/script/runtime/calls_plot.cpp tlibs/script/runtime/calls_plot.cpp
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/script/runtime/calls_plot.cpp	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/script/runtime/calls_plot.cpp	2016-06-18 21:18:06.812687192 +0200
+@@ -17,7 +17,7 @@
+ 
+ //#define DEFAULT_TERM T_STR"qt";
+ #define DEFAULT_TERM T_STR"x11";
+-static tl::GnuPlot_gen<t_real> g_plot;
++static tl::GnuPlot<t_real> g_plot;
+ 
+ static inline bool is_array_of_arrays(const Symbol* pSym)
+ {
+@@ -106,8 +106,8 @@
+ }
+ 
+ 
+-static void set_plot_params(tl::GnuPlot_gen<t_real>& plot, const SymbolMap* pParamMap, 
+-	tl::PlotObj_gen<t_real>* pCurPlotObj=0, XYLimits* pLimits=0)
++static void set_plot_params(tl::GnuPlot<t_real>& plot, const SymbolMap* pParamMap, 
++	tl::PlotObj<t_real>* pCurPlotObj=0, XYLimits* pLimits=0)
+ {
+ 	bool bHasVal = 0;
+ 	t_string strTitle = pParamMap->GetStringVal(T_STR"title", &bHasVal);
+@@ -252,7 +252,7 @@
+ 			vecXErr = ((SymbolArray*)vecSyms[3])->ToDoubleArray();
+ 
+ 
+-		tl::PlotObj_gen<t_real> obj;
++		tl::PlotObj<t_real> obj;
+ 		obj.vecX = vecX;
+ 		obj.vecY = vecY;
+ 		obj.vecErrX = vecXErr;
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/script/test/rotscan.scr tlibs/script/test/rotscan.scr
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/script/test/rotscan.scr	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/script/test/rotscan.scr	2016-06-18 19:59:23.454884736 +0200
+@@ -14,7 +14,7 @@
+ 
+ main()
+ {
+-	a = 4.54288;
++	a = 4.56;
+ 	kh = 0.036;
+ 	scale = 2.25;
+ 
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/script/themakefile tlibs/script/themakefile
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/script/themakefile	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/script/themakefile	2016-06-18 21:34:27.071646195 +0200
+@@ -1,5 +1,5 @@
+-CC = gcc
+-#CC = clang
++#CC = gcc
++CC = clang
+ 
+ DEBUG = 0
+ USE_FFTW = 0
+@@ -19,7 +19,7 @@
+ DEFINES = -DNO_QT -DTLIBS_INC_HDR_IMPLS
+ INCS =
+ FLAGS = -std=c++11 -fopenmp ${OPT_FLAGS} ${DEFINES} ${INCS}
+-#FLAGS += -Wall -Wpedantic
++FLAGS += -Wpedantic -Wextra
+ 
+ LIBS = -L/usr/local/lib
+ 
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/test/bose.cpp tlibs/test/bose.cpp
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/test/bose.cpp	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/test/bose.cpp	2016-06-16 11:23:50.731460454 +0200
+@@ -2,7 +2,7 @@
+ 
+ #include <iostream>
+ #include <fstream>
+-#include "math/neutrons.hpp"
++#include "math/neutrons.h"
+ 
+ int main()
+ {
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/test/dft3.cpp tlibs/test/dft3.cpp
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/test/dft3.cpp	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/test/dft3.cpp	2016-06-16 11:21:54.055457974 +0200
+@@ -1,8 +1,8 @@
+-// gcc -o dft3 dft3.cpp ../math/fftw.cpp ../helper/log.cpp -lfftw3 -lstdc++ -lm -std=c++11
++// gcc -o dft3 dft3.cpp ../math/fftw.cpp ../log/log.cpp -lfftw3 -lstdc++ -lm -std=c++11
+ 
+ #include "../math/dft.h"
+ #include "../math/fftw.h"
+-#include "../helper/stopwatch.h"
++#include "../time/stopwatch.h"
+ #include <iostream>
+ 
+ #define NUM 4096
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/test/dft.cpp tlibs/test/dft.cpp
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/test/dft.cpp	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/test/dft.cpp	2016-06-16 11:20:26.172456106 +0200
+@@ -1,5 +1,5 @@
+-// gcc -DUSE_FFTW -o dft dft.cpp ../math/fourier.cpp ../helper/log.cpp -lstdc++ -lm -std=c++11 -lfftw3
+-// gcc -o dft dft.cpp ../math/fourier.cpp ../helper/log.cpp -lstdc++ -lm -std=c++11
++// gcc -DUSE_FFTW -o dft dft.cpp ../math/fourier.cpp ../log/log.cpp -lstdc++ -lm -std=c++11 -lfftw3
++// gcc -o dft dft.cpp ../math/fourier.cpp ../log/log.cpp -lstdc++ -lm -std=c++11
+ 
+ #include "../math/fourier.h"
+ #include <iostream>
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/test/eig.cpp tlibs/test/eig.cpp
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/test/eig.cpp	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/test/eig.cpp	2016-06-16 11:19:30.462454921 +0200
+@@ -1,4 +1,4 @@
+-// gcc -I/usr/include/lapacke -o eig eig.cpp ../math/linalg2.cpp ../helper/log.cpp -lstdc++ -lm -llapacke -llapack -std=c++11
++// gcc -I/usr/include/lapacke -o eig eig.cpp ../math/linalg2.cpp ../log/log.cpp -lstdc++ -lm -llapacke -llapack -std=c++11
+ 
+ #include "../math/linalg.h"
+ #include "../math/linalg2.h"
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/test/eval.cpp tlibs/test/eval.cpp
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/test/eval.cpp	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/test/eval.cpp	2016-06-16 11:18:15.820453335 +0200
+@@ -1,6 +1,7 @@
+ // gcc -o eval test/eval.cpp log/log.cpp -std=c++11 -lstdc++ -lm
+ 
+ #include "../string/eval.h"
++#include "../string/eval_impl.h"
+ #include <iostream>
+ #include <tuple>
+ #include <vector>
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/test/ferro.cpp tlibs/test/ferro.cpp
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/test/ferro.cpp	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/test/ferro.cpp	2016-06-16 11:17:07.780451889 +0200
+@@ -1,7 +1,7 @@
+ // clang -o ferro test/ferro.cpp gfx/gnuplot.cpp log/log.cpp  -lstdc++ -lm -lboost_iostreams -std=c++11
+ 
+ #include "../math/mag.h"
+-#include "../math/neutrons.hpp"
++#include "../math/neutrons.h"
+ #include "../gfx/gnuplot.h"
+ 
+ #include <tuple>
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/test/larmor.cpp tlibs/test/larmor.cpp
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/test/larmor.cpp	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/test/larmor.cpp	2016-06-16 11:14:58.620449143 +0200
+@@ -1,4 +1,4 @@
+-#include "../math/mieze.hpp"
++#include "../math/mieze.h"
+ 
+ #include <iostream>
+ #include <boost/units/io.hpp>
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/test/ostream.cpp tlibs/test/ostream.cpp
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/test/ostream.cpp	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/test/ostream.cpp	2016-06-16 11:13:14.926446939 +0200
+@@ -1,4 +1,4 @@
+-// gcc -o ostream ostream.cpp ../helper/log.cpp -lstdc++ -std=c++11 -lboost_iostreams
++// gcc -o ostream ostream.cpp ../log/log.cpp -lstdc++ -std=c++11 -lboost_iostreams
+ 
+ #include "../file/comp.h"
+ #include <memory>
+@@ -6,8 +6,7 @@
+ int main()
+ {
+ 	std::ofstream ofstr("tst.txt.gz");
+-	std::ostream *pOstr = tl::create_comp_ostream(ofstr, tl::Compressor::GZ);
+-	std::unique_ptr<std::ostream> ptrOstr(pOstr);
++	std::shared_ptr<std::ostream> pOstr = tl::create_comp_ostream(ofstr, tl::Compressor::GZ);
+ 
+ 	for(int i=0; i<1000; ++i)
+ 		(*pOstr) << i << "\n";
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/test/prop.cpp tlibs/test/prop.cpp
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/test/prop.cpp	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/test/prop.cpp	2016-06-16 11:11:41.059444944 +0200
+@@ -6,7 +6,7 @@
+ 	//prop.Load("tst.ini");
+ 	prop.Add<std::string>("Sec1/Key1", "123");
+ 	prop.Add<std::string>("Sec1/Key2", "Test");
+-	
++
+ 	std::map<std::string, std::string> map;
+ 	map["Sec2/Key1"] = "abcde";
+ 	map["Sec2/Key2"] = "xyz";
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/test/spin.cpp tlibs/test/spin.cpp
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/test/spin.cpp	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/test/spin.cpp	2016-06-18 20:50:40.014756066 +0200
+@@ -1,5 +1,7 @@
+-// clang -I/usr/include/lapacke -o spin test/spin.cpp log/log.cpp -lstdc++ -std=c++11 -lm -llapacke -llapack
+-// tw
++/*
++ * clang -I/usr/include/lapacke -o spin test/spin.cpp log/log.cpp -lstdc++ -std=c++11 -lm -llapacke -llapack
++ * @author tweber
++ */
+ 
+ #define TLIBS_USE_GLOBAL_OPS
+ #include "../math/linalg.h"
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/test/typeidx.cpp tlibs/test/typeidx.cpp
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/test/typeidx.cpp	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/test/typeidx.cpp	2016-06-16 11:05:40.344437276 +0200
+@@ -1,4 +1,4 @@
+-#include "../helper/misc.h"
++#include "../log/debug.h"
+ #include <iostream>
+ 
+ 
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/test/varg.cpp tlibs/test/varg.cpp
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/test/varg.cpp	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/test/varg.cpp	2016-06-16 11:03:43.656434796 +0200
+@@ -8,6 +8,7 @@
+ #include <utility>
+ #include <iostream>
+ #include "../helper/misc.h"
++#include "../log/debug.h"
+ 
+ 
+ template<class ...t_args>
+diff -ruN tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/test/vec.cpp tlibs/test/vec.cpp
+--- tlibs-5a73f10febdd153b46d5bba4418349184b54ab29/test/vec.cpp	2016-06-14 09:16:08.000000000 +0200
++++ tlibs/test/vec.cpp	2016-06-16 11:02:38.604433413 +0200
+@@ -1,5 +1,6 @@
+-// gcc -o vec vec.cpp ../helper/log.cpp -lstdc++ -lm -std=c++11
++// gcc -o vec vec.cpp ../log/log.cpp -lstdc++ -lm -std=c++11
+ 
++#define TLIBS_USE_GLOBAL_OPS
+ #include "../math/linalg.h"
+ #include "../math/linalg_ops.h"
+ 

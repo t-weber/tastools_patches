@@ -1,0 +1,1722 @@
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/backup-src.sh tastools/backup-src.sh
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/backup-src.sh	1970-01-01 01:00:00.000000000 +0100
++++ tastools/backup-src.sh	2016-06-19 03:20:29.858153280 +0200
+@@ -0,0 +1,17 @@
++#!/bin/zsh
++# quick backup of Takin source files
++# @author tweber
++# @date 18-jun-2016
++
++thetime=${${${$(date --iso-8601='ns')//:/-}//,/_}//+/p}
++thefile="takin_src-${thetime}.txz"
++
++find . \( -name "*.cpp" -type f \) -o \
++	\( -name "*.h" -type f \) -o \
++	\( -name "*.py" -type f \) -o \
++	\( -name "*.scr" -type f \) -o \
++	\( -name "*.sh" -type f \) -o \
++	\( -name "*.ui" -type f \) \
++	| xargs tar -Jvcf ${thefile}
++
++echo -e "\nWrote ${thefile}\n"
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/CMakeLists-dynamic.txt tastools/CMakeLists-dynamic.txt
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/CMakeLists-dynamic.txt	2016-06-14 12:53:37.000000000 +0200
++++ tastools/CMakeLists-dynamic.txt	2016-06-18 20:32:57.661800496 +0200
+@@ -98,7 +98,7 @@
+ 	tools/taz/real_lattice.cpp tools/taz/proj_lattice.cpp
+ 	tools/taz/nicos.cpp tools/taz/sics.cpp tools/taz/taz_net.cpp
+ 
+-	tools/res/cn.cpp tools/res/pop.cpp tools/res/eck.cpp tools/res/viol.cpp
++	tools/res/cn.cpp tools/res/pop.cpp tools/res/eck.cpp tools/res/viol.cpp tools/res/simple.cpp
+ 	tools/res/ResoDlg.cpp
+ 
+ 	tools/monteconvo/ConvoDlg.cpp tools/monteconvo/SqwParamDlg.cpp tools/monteconvo/TASReso.cpp
+@@ -165,7 +165,8 @@
+ # convofit, convoseries
+ # -----------------------------------------------------------------------------
+ add_executable(convofit 
+-	tools/res/cn.cpp tools/res/pop.cpp tools/res/eck.cpp tools/res/viol.cpp
++	tools/res/cn.cpp tools/res/pop.cpp tools/res/eck.cpp tools/res/viol.cpp 
++	#tools/res/simple.cpp
+ 
+ 	tools/monteconvo/TASReso.cpp
+ 	tools/monteconvo/sqw.cpp tools/monteconvo/sqwbase.cpp tools/monteconvo/sqwfactory.cpp
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/CMakeLists-static-cli.txt tastools/CMakeLists-static-cli.txt
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/CMakeLists-static-cli.txt	2016-06-14 12:53:37.000000000 +0200
++++ tastools/CMakeLists-static-cli.txt	2016-06-18 20:33:28.805799194 +0200
+@@ -45,6 +45,7 @@
+ 	tools/cli/cli_main.cpp
+ 
+ 	tools/res/cn.cpp tools/res/pop.cpp tools/res/eck.cpp tools/res/viol.cpp
++	tools/res/simple.cpp
+ 	tools/monteconvo/TASReso.cpp
+ 
+ 	# statically link to tlibs externals
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/CMakeLists-static-mingw.txt tastools/CMakeLists-static-mingw.txt
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/CMakeLists-static-mingw.txt	2016-06-14 12:53:37.000000000 +0200
++++ tastools/CMakeLists-static-mingw.txt	2016-06-18 20:33:13.350799840 +0200
+@@ -65,7 +65,7 @@
+ 	tools/taz/real_lattice.cpp tools/taz/proj_lattice.cpp
+ 	tools/taz/nicos.cpp tools/taz/sics.cpp tools/taz/taz_net.cpp
+ 
+-	tools/res/cn.cpp tools/res/pop.cpp tools/res/eck.cpp tools/res/viol.cpp
++	tools/res/cn.cpp tools/res/pop.cpp tools/res/eck.cpp tools/res/viol.cpp tools/res/simple.cpp
+ 	tools/res/ResoDlg.cpp
+ 
+ 	tools/monteconvo/ConvoDlg.cpp tools/monteconvo/SqwParamDlg.cpp tools/monteconvo/TASReso.cpp
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/CMakeLists-static.txt tastools/CMakeLists-static.txt
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/CMakeLists-static.txt	2016-06-14 12:53:37.000000000 +0200
++++ tastools/CMakeLists-static.txt	2016-06-18 20:32:41.324801180 +0200
+@@ -97,7 +97,7 @@
+ 	tools/taz/real_lattice.cpp tools/taz/proj_lattice.cpp
+ 	tools/taz/nicos.cpp tools/taz/sics.cpp tools/taz/taz_net.cpp
+ 
+-	tools/res/cn.cpp tools/res/pop.cpp tools/res/eck.cpp tools/res/viol.cpp
++	tools/res/cn.cpp tools/res/pop.cpp tools/res/eck.cpp tools/res/viol.cpp tools/res/simple.cpp
+ 	tools/res/ResoDlg.cpp
+ 
+ 	tools/monteconvo/ConvoDlg.cpp tools/monteconvo/SqwParamDlg.cpp tools/monteconvo/TASReso.cpp
+@@ -174,6 +174,7 @@
+ # -----------------------------------------------------------------------------
+ add_executable(convofit 
+ 	tools/res/cn.cpp tools/res/pop.cpp tools/res/eck.cpp tools/res/viol.cpp
++	#tools/res/simple.cpp
+ 
+ 	tools/monteconvo/TASReso.cpp
+ 	tools/monteconvo/sqw.cpp tools/monteconvo/sqwbase.cpp tools/monteconvo/sqwfactory.cpp
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/CMakeLists.txt tastools/CMakeLists.txt
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/CMakeLists.txt	2016-06-14 12:53:37.000000000 +0200
++++ tastools/CMakeLists.txt	2016-06-18 20:32:41.324801180 +0200
+@@ -97,7 +97,7 @@
+ 	tools/taz/real_lattice.cpp tools/taz/proj_lattice.cpp
+ 	tools/taz/nicos.cpp tools/taz/sics.cpp tools/taz/taz_net.cpp
+ 
+-	tools/res/cn.cpp tools/res/pop.cpp tools/res/eck.cpp tools/res/viol.cpp
++	tools/res/cn.cpp tools/res/pop.cpp tools/res/eck.cpp tools/res/viol.cpp tools/res/simple.cpp
+ 	tools/res/ResoDlg.cpp
+ 
+ 	tools/monteconvo/ConvoDlg.cpp tools/monteconvo/SqwParamDlg.cpp tools/monteconvo/TASReso.cpp
+@@ -174,6 +174,7 @@
+ # -----------------------------------------------------------------------------
+ add_executable(convofit 
+ 	tools/res/cn.cpp tools/res/pop.cpp tools/res/eck.cpp tools/res/viol.cpp
++	#tools/res/simple.cpp
+ 
+ 	tools/monteconvo/TASReso.cpp
+ 	tools/monteconvo/sqw.cpp tools/monteconvo/sqwbase.cpp tools/monteconvo/sqwfactory.cpp
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/dialogs/AtomsDlg.h tastools/dialogs/AtomsDlg.h
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/dialogs/AtomsDlg.h	2016-06-14 12:53:37.000000000 +0200
++++ tastools/dialogs/AtomsDlg.h	2016-06-18 20:23:29.456824260 +0200
+@@ -26,8 +26,8 @@
+ class AtomsDlg : public QDialog, Ui::AtomsDlg
+ { Q_OBJECT
+ protected:
+-	bool m_bEnableJ = 0;
+ 	QSettings *m_pSettings = nullptr;
++	bool m_bEnableJ = 0;
+ 
+ protected:
+ 	virtual void closeEvent(QCloseEvent*) override;
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/dialogs/EllipseDlg3D.cpp tastools/dialogs/EllipseDlg3D.cpp
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/dialogs/EllipseDlg3D.cpp	2016-06-14 12:53:37.000000000 +0200
++++ tastools/dialogs/EllipseDlg3D.cpp	2016-06-17 07:28:23.486015081 +0200
+@@ -1,4 +1,4 @@
+-/*
++/**
+  * 3D Ellipsoid Dialog
+  * @author Tobias Weber
+  * @date may-2013, 29-apr-2014
+@@ -24,10 +24,12 @@
+ 	}
+ 
+ 	PlotGl* pPlotLeft = new PlotGl(this, m_pSettings);
++	pPlotLeft->SetPrec(g_iPrecGfx);
+ 	pPlotLeft->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+ 	m_pPlots.push_back(pPlotLeft);
+ 
+ 	PlotGl* pPlotRight = new PlotGl(this, m_pSettings);
++	pPlotRight->SetPrec(g_iPrecGfx);
+ 	pPlotRight->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+ 	m_pPlots.push_back(pPlotRight);
+ 
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/dialogs/EllipseDlg.cpp tastools/dialogs/EllipseDlg.cpp
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/dialogs/EllipseDlg.cpp	2016-06-14 12:53:37.000000000 +0200
++++ tastools/dialogs/EllipseDlg.cpp	2016-06-18 18:11:57.192154337 +0200
+@@ -273,6 +273,7 @@
+ 				case ResoAlgo::POP: SetTitle("Popovici Algorithm (TAS)"); break;
+ 				case ResoAlgo::ECK: SetTitle("Eckold-Sobolev Algorithm (TAS)"); break;
+ 				case ResoAlgo::VIOL: SetTitle("Violini Algorithm (TOF)"); break;
++				case ResoAlgo::SIMPLE: SetTitle("Simple Algorithm"); break;
+ 				default: SetTitle("Unknown Resolution Algorithm"); break;
+ 			}
+ 		}
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/libs/plotgl.cpp tastools/libs/plotgl.cpp
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/libs/plotgl.cpp	2016-06-14 12:53:37.000000000 +0200
++++ tastools/libs/plotgl.cpp	2016-06-17 07:26:29.050013183 +0200
+@@ -282,12 +282,12 @@
+ 			m_pFont->DrawText(0., 0., m_dZMax*dAxisScale , m_strLabels[2].toStdString());
+ 
+ 			glColor4d(0., 0., 0., 1.);
+-			m_pFont->DrawText(m_dXMin, 0., 0., tl::var_to_str(m_dXMin+m_dXMinMaxOffs));
+-			m_pFont->DrawText(m_dXMax, 0., 0., tl::var_to_str(m_dXMax+m_dXMinMaxOffs));
+-			m_pFont->DrawText(0., m_dYMin, 0., tl::var_to_str(m_dYMin+m_dYMinMaxOffs));
+-			m_pFont->DrawText(0., m_dYMax, 0., tl::var_to_str(m_dYMax+m_dYMinMaxOffs));
+-			m_pFont->DrawText(0., 0., m_dZMin, tl::var_to_str(m_dZMin+m_dZMinMaxOffs));
+-			m_pFont->DrawText(0., 0., m_dZMax, tl::var_to_str(m_dZMax+m_dZMinMaxOffs));
++			m_pFont->DrawText(m_dXMin, 0., 0., tl::var_to_str(m_dXMin+m_dXMinMaxOffs, m_iPrec));
++			m_pFont->DrawText(m_dXMax, 0., 0., tl::var_to_str(m_dXMax+m_dXMinMaxOffs, m_iPrec));
++			m_pFont->DrawText(0., m_dYMin, 0., tl::var_to_str(m_dYMin+m_dYMinMaxOffs, m_iPrec));
++			m_pFont->DrawText(0., m_dYMax, 0., tl::var_to_str(m_dYMax+m_dYMinMaxOffs, m_iPrec));
++			m_pFont->DrawText(0., 0., m_dZMin, tl::var_to_str(m_dZMin+m_dZMinMaxOffs, m_iPrec));
++			m_pFont->DrawText(0., 0., m_dZMax, tl::var_to_str(m_dZMax+m_dZMinMaxOffs, m_iPrec));
+ 		}
+ 	glPopMatrix();
+ 
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/libs/plotgl.h tastools/libs/plotgl.h
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/libs/plotgl.h	2016-06-14 12:53:37.000000000 +0200
++++ tastools/libs/plotgl.h	2016-06-17 07:27:36.635014304 +0200
+@@ -63,6 +63,7 @@
+ 	GLuint m_iLstSphere[8];
+ 	QString m_strLabels[3];
+ 
++	unsigned int m_iPrec = 6;
+ 	double m_dXMin=-10., m_dXMax=10.;
+ 	double m_dYMin=-10., m_dYMax=10.;
+ 	double m_dZMin=-10., m_dZMax=10.;
+@@ -152,6 +153,7 @@
+ 	}
+ 
+ 	void SetEnabled(bool b);
++	void SetPrec(unsigned int iPrec) { m_iPrec = iPrec; }
+ };
+ 
+ #endif
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/libs/qthelper.cpp tastools/libs/qthelper.cpp
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/libs/qthelper.cpp	2016-06-14 12:53:37.000000000 +0200
++++ tastools/libs/qthelper.cpp	2016-06-18 20:27:42.456813679 +0200
+@@ -69,14 +69,14 @@
+ 
+ public:
+ 	MyQwtPlotPicker(QwtPlotWrapper *pPlotWrap, bool bNoTrackerSignal=0) :
+-		m_pPlotWrap(pPlotWrap),
+ 		QwtPlotPicker(pPlotWrap->GetPlot()->xBottom, pPlotWrap->GetPlot()->yLeft,
+ #if QWT_VER<6
+ 		QwtPlotPicker::PointSelection,
+ #endif
+ 		QwtPlotPicker::NoRubberBand,
+ 		bNoTrackerSignal ? QwtPicker::AlwaysOn : QwtPicker::AlwaysOff,
+-		pPlotWrap->GetPlot()->canvas())
++		pPlotWrap->GetPlot()->canvas()),
++		m_pPlotWrap(pPlotWrap)
+ 	{
+ #if QWT_VER>=6
+ 		QwtPlotPicker::setStateMachine(new QwtPickerTrackerMachine());
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/takin.project tastools/takin.project
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/takin.project	2016-06-14 12:53:37.000000000 +0200
++++ tastools/takin.project	2016-06-18 20:51:40.771753525 +0200
+@@ -110,6 +110,8 @@
+       <File Name="tools/res/eck.h"/>
+       <File Name="tools/res/viol.cpp"/>
+       <File Name="tools/res/viol.h"/>
++      <File Name="tools/res/simple.cpp"/>
++      <File Name="tools/res/simple.h"/>
+     </VirtualDirectory>
+     <VirtualDirectory Name="taz">
+       <File Name="tools/taz/taz.h"/>
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/themakefile tastools/themakefile
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/themakefile	2016-06-14 12:53:37.000000000 +0200
++++ tastools/themakefile	2016-06-18 21:02:52.906725414 +0200
+@@ -126,7 +126,7 @@
+ 
+ 
+ ifeq ($(DO_DEBUG), 0)
+-	FLAGS = ${INC} -O2 -std=c++11 -DNDEBUG -Wall -fPIC
++	FLAGS = ${INC} -O2 -std=c++11 -DNDEBUG -Wall -Wpedantic -Wextra -fPIC
+ 	ifeq ($(NATIVE_OPTS), 1)
+ 		FLAGS += -march=native
+ 	else
+@@ -138,7 +138,7 @@
+ 	FLAGS += ${DEFINES}
+ 	STRIP = strip -v 
+ else
+-	FLAGS = ${INC} -std=c++11 -rdynamic -ggdb -DDEBUG -Wall -Weffc++ -fPIC ${DEFINES}
++	FLAGS = ${INC} -std=c++11 -rdynamic -ggdb -DDEBUG -Wall -Wall -Wpedantic -Wextra -Weffc++ -fPIC ${DEFINES}
+ 	STRIP = echo Retaining debug symbols of 
+ endif
+ 
+@@ -215,8 +215,9 @@
+ 	obj/FilePreviewDlg.o obj/AtomsDlg.o \
+ 	obj/SpurionDlg.o obj/NeutronDlg.o \
+ 	obj/crystalsys.o obj/formfact.o \
+-	obj/cn.o obj/pop.o obj/eck.o obj/viol.o obj/ResoDlg.o \
+-	obj/loadinstr.o obj/recent.o obj/globals.o obj/globals_qt.o obj/qthelper.o \
++	obj/cn.o obj/pop.o obj/eck.o obj/viol.o obj/simple.o \
++	obj/ResoDlg.o obj/loadinstr.o obj/recent.o obj/globals.o \
++	obj/globals_qt.o obj/qthelper.o \
+ 	obj/sqw.o obj/sqwbase.o obj/sqwfact.o ${PY_OBJS} obj/tasreso.o \
+ 	obj/ConvoDlg.o obj/SqwParamDlg.o \
+ 	obj/scanviewer.o obj/x3d.o obj/eval.o \
+@@ -237,7 +238,7 @@
+ 
+ OBJ_RESO = obj/log.o obj/debug.o obj/rand.o \
+ 	obj/spec_char.o obj/reso_res_main.o \
+-	obj/cn.o obj/pop.o obj/eck.o obj/viol.o obj/ResoDlg.o \
++	obj/cn.o obj/pop.o obj/eck.o obj/viol.o obj/simple.o obj/ResoDlg.o \
+ 	obj/linalg2.o obj/globals.o obj/globals_qt.o
+ 
+ OBJ_SCANVIEWER = obj/scanviewer_main.o obj/scanviewer.o \
+@@ -458,6 +459,8 @@
+ 	${CC} ${FLAGS} -DNO_QT -c -o $@ $<
+ obj/viol.o: tools/res/viol.cpp tools/res/viol.h
+ 	${CC} ${FLAGS} -DNO_QT -c -o $@ $<
++obj/simple.o: tools/res/simple.cpp tools/res/simple.h
++	${CC} ${FLAGS} -DNO_QT -c -o $@ $<
+ #obj/ellipse.o: tools/res/ellipse.cpp tools/res/ellipse.h
+ #	${CC} ${FLAGS} -DNO_QT -c -o $@ $<
+ obj/ResoDlg.o: tools/res/ResoDlg.cpp tools/res/ResoDlg.h
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/convofit/convofit.cpp tastools/tools/convofit/convofit.cpp
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/convofit/convofit.cpp	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/convofit/convofit.cpp	2016-06-18 21:19:09.824684557 +0200
+@@ -153,10 +153,10 @@
+ 	bool bPlotIntermediate = prop.Query<bool>("output/plot_intermediate", 0);
+ 	unsigned int iPlotPoints = prop.Query<unsigned>("output/plot_points", 128);
+ 
+-	std::unique_ptr<tl::GnuPlot_gen<t_real>> plt;
++	std::unique_ptr<tl::GnuPlot<t_real>> plt;
+ 	if(bPlot || bPlotIntermediate)
+ 	{
+-		plt.reset(new tl::GnuPlot_gen<t_real>());
++		plt.reset(new tl::GnuPlot<t_real>());
+ 		plt->Init();
+ 	}
+ 
+@@ -234,7 +234,7 @@
+ 	tl::log_info("Number of scan groups: ", vecSc.size(), ".");
+ 
+ 	// scan plot object
+-	tl::PlotObj_gen<t_real> pltMeas;
++	tl::PlotObj<t_real> pltMeas;
+ 	if(bPlot || bPlotIntermediate)
+ 	{
+ 		pltMeas.vecX = vecSc[0].vecX;
+@@ -326,7 +326,7 @@
+ 			vecModTmpX.push_back(E);	// TODO: use scan direction
+ 			vecModTmpY.push_back(S);
+ 
+-			tl::PlotObj_gen<t_real> pltMod;
++			tl::PlotObj<t_real> pltMod;
+ 			pltMod.vecX = vecModTmpX;
+ 			pltMod.vecY = vecModTmpY;
+ 			pltMod.linestyle = tl::STYLE_LINES_SOLID;
+@@ -424,8 +424,8 @@
+ 		mod.AddModelFitParams(strParam, dVal, dErr);
+ 	}
+ 
+-	//tl::Chi2Function_gen<t_real_sc> chi2fkt(&mod, vecSc[0].vecX.size(), vecSc[0].vecX.data(), vecSc[0].vecCts.data(), vecSc[0].vecCtsErr.data());
+-	tl::Chi2Function_mult_gen<t_real_sc, std::vector> chi2fkt;
++	//tl::Chi2Function<t_real_sc> chi2fkt(&mod, vecSc[0].vecX.size(), vecSc[0].vecX.data(), vecSc[0].vecCts.data(), vecSc[0].vecCtsErr.data());
++	tl::Chi2Function_mult<t_real_sc, std::vector> chi2fkt;
+ 	// the vecSc[0] data sets are the default data set (will not be used if scan groups are defined)
+ 	chi2fkt.AddFunc(&mod, vecSc[0].vecX.size(), vecSc[0].vecX.data(), vecSc[0].vecCts.data(), vecSc[0].vecCtsErr.data());
+ 	chi2fkt.SetDebug(1);
+@@ -522,7 +522,7 @@
+ 		tl::DatFile<t_real, char> datMod;
+ 		datMod.Load(strModOutFile);
+ 
+-		tl::PlotObj_gen<t_real> pltMod;
++		tl::PlotObj<t_real> pltMod;
+ 		pltMod.vecX = datMod.GetColumn(0);
+ 		pltMod.vecY = datMod.GetColumn(1);
+ 		pltMod.linestyle = tl::STYLE_LINES_SOLID;
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/misc/addscans.cpp tastools/tools/misc/addscans.cpp
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/misc/addscans.cpp	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/misc/addscans.cpp	2016-06-18 19:06:02.987018589 +0200
+@@ -1,12 +1,14 @@
+-// gcc -DNO_IOSTR -o addscans ../../tlibs/file/loadinstr.cpp ../../tlibs/log/log.cpp addscans.cpp -std=c++11 -lstdc++ -lm
++// gcc -I../.. -I. -DNO_IOSTR -o addscans ../../tlibs/file/loadinstr.cpp ../../tlibs/log/log.cpp addscans.cpp -std=c++11 -lstdc++ -lm -lboost_system -lboost_filesystem
+ // e.g. ./addscans /home/tweber/Auswertungen/MnSi-Mira-15/data3/11009_00016851.dat /home/tweber/Auswertungen/MnSi-Mira-15/data3/11009_00016867.dat merged.dat
+ 
+ #include <iostream>
+ #include <fstream>
+ #include <iomanip>
+-#include "../../tlibs/file/loadinstr.h"
+-#include "../../tlibs/log/log.h"
++#include "tlibs/file/loadinstr.h"
++#include "tlibs/log/log.h"
++#include "libs/globals.h"
+ 
++using t_real = t_real_glob;
+ 
+ int main(int argc, char **argv)
+ {
+@@ -16,7 +18,7 @@
+ 		return -1;
+ 	}
+ 
+-	tl::FileFrm dat0;
++	tl::FileFrm<> dat0;
+ 	tl::log_info("Loading file ", argv[1]);
+ 	if(!dat0.Load(argv[1]))
+ 	{
+@@ -28,15 +30,15 @@
+ 	std::string strMon = "mon2"; //dat0.GetMonVar();
+ 	tl::log_info("Count var: ", strCnt, ", monitor var: ", strMon);
+ 
+-	tl::FileInstr::t_vecVals& vecCnt0 = dat0.GetCol(strCnt);
+-	tl::FileInstr::t_vecVals& vecMon0 = dat0.GetCol(strMon);
++	tl::FileInstrBase<>::t_vecVals& vecCnt0 = dat0.GetCol(strCnt);
++	tl::FileInstrBase<>::t_vecVals& vecMon0 = dat0.GetCol(strMon);
+ 
+ 
+ 	for(int iArg=2; iArg<argc-1; ++iArg)
+ 	{
+ 		const char* pcFile = argv[iArg];
+ 
+-		tl::FileFrm dat;
++		tl::FileFrm<> dat;
+ 		tl::log_info("Loading file ", pcFile);
+ 	        if(!dat.Load(pcFile))
+ 		{
+@@ -44,8 +46,8 @@
+ 			return -1;
+ 		}
+ 
+-		const tl::FileInstr::t_vecVals& vecCnt = dat.GetCol(strCnt);
+-		const tl::FileInstr::t_vecVals& vecMon = dat.GetCol(strMon);
++		const tl::FileInstrBase<>::t_vecVals& vecCnt = dat.GetCol(strCnt);
++		const tl::FileInstrBase<>::t_vecVals& vecMon = dat.GetCol(strMon);
+ 
+ 		if(vecCnt.size() != vecCnt0.size() || vecMon.size() != vecMon0.size())
+ 		{
+@@ -71,12 +73,12 @@
+ 	}
+ 
+ 	ofstr.precision(16);
+-	const tl::FileInstr::t_vecColNames& vecColNames = dat0.GetColNames();
++	const tl::FileInstrBase<>::t_vecColNames& vecColNames = dat0.GetColNames();
+ 	for(unsigned int i=0; i<vecCnt0.size(); ++i)
+ 	{
+ 		for(const std::string& strColName : vecColNames)
+ 		{
+-			tl::FileInstr::t_vecVals& vecCol = dat0.GetCol(strColName);
++			tl::FileInstrBase<>::t_vecVals& vecCol = dat0.GetCol(strColName);
+ 			ofstr << std::setw(20) << vecCol[i];
+ 		}
+ 		ofstr << "\n";
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/misc/fcc_hk0.cpp tastools/tools/misc/fcc_hk0.cpp
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/misc/fcc_hk0.cpp	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/misc/fcc_hk0.cpp	2016-06-18 19:53:40.865899064 +0200
+@@ -1,5 +1,8 @@
+-// gcc -o fcc_hk0 fcc_hk0.cpp -std=c++11 -lstdc++ -lm
+-// draws 1st BZ of fcc in hk0 plane
++/*
++ * gcc -o fcc_hk0 fcc_hk0.cpp -std=c++11 -lstdc++ -lm
++ * draws 1st BZ of fcc in hk0 plane
++ * @author: tweber
++ */
+ 
+ #include <iostream>
+ 
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/misc/hopfgen.cpp tastools/tools/misc/hopfgen.cpp
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/misc/hopfgen.cpp	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/misc/hopfgen.cpp	2016-06-18 19:53:10.320900342 +0200
+@@ -1,4 +1,5 @@
+ // gcc -o hopfgen hopfgen.cpp -std=c++11 -lstdc++ -lm
++// @author: tw
+ 
+ #include "../../tlibs/math/linalg.h"
+ #include <iostream>
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/misc/tst_client.cpp tastools/tools/misc/tst_client.cpp
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/misc/tst_client.cpp	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/misc/tst_client.cpp	2016-06-18 19:53:21.290899883 +0200
+@@ -1,5 +1,6 @@
+ /*
+- * clang -o tst_client tools/misc/tst_client.cpp tlibs/net/tcp.cpp tlibs/log/log.cpp -lstdc++ -std=c++11 -lboost_system -lpthread -lm
++ * clang -o tst_client -I../.. tst_client.cpp ../../tlibs/net/tcp.cpp ../../tlibs/log/log.cpp -lstdc++ -std=c++11 -lboost_system -lpthread -lm
++ * @author tw
+  */
+ 
+ #include <fstream>
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/misc/tst_server.cpp tastools/tools/misc/tst_server.cpp
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/misc/tst_server.cpp	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/misc/tst_server.cpp	2016-06-18 18:57:25.748040221 +0200
+@@ -2,7 +2,7 @@
+  * test instrument server
+  * @author tweber
+  * @date apr-2016
+- * clang -o tst_server -I. tools/misc/tst_server.cpp tlibs/net/tcp.cpp tlibs/log/log.cpp -lstdc++ -std=c++11 -lboost_system -lboost_iostreams -lpthread -lm
++ * clang -o tst_server -I. -I../.. ../../tools/misc/tst_server.cpp ../../tlibs/net/tcp.cpp ../../tlibs/log/log.cpp -lstdc++ -std=c++11 -lboost_system -lboost_iostreams -lpthread -lm
+  */
+ 
+ #include "tlibs/net/tcp.h"
+@@ -33,7 +33,7 @@
+ 	}
+ 
+ 
+-	TcpServer server;
++	TcpTxtServer<> server;
+ 	server.add_disconnect(disconnected);
+ 	server.add_server_start(connected);
+ 	server.add_receiver([&server](const std::string& strMsg)
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/monteconvo/SqwParamDlg.cpp tastools/tools/monteconvo/SqwParamDlg.cpp
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/monteconvo/SqwParamDlg.cpp	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/monteconvo/SqwParamDlg.cpp	2016-06-16 09:40:30.397328658 +0200
+@@ -1,4 +1,4 @@
+-/*
++/**
+  * S(q,w) parameters dialog
+  * @author tweber
+  * @date aug-2015
+@@ -6,7 +6,14 @@
+  */
+ 
+ #include "SqwParamDlg.h"
++#include <QMessageBox>
+ 
++enum
++{
++	SQW_NAME = 0,
++	SQW_TYPE = 1,
++	SQW_VAL = 2
++};
+ 
+ SqwParamDlg::SqwParamDlg(QWidget* pParent, QSettings* pSett)
+ 	: QDialog(pParent), m_pSett(pSett)
+@@ -38,9 +45,9 @@
+ 	tableParams->setSortingEnabled(0);
+ 
+ 	tableParams->setRowCount(vecVars.size());
+-	tableParams->setColumnWidth(0, 100);
+-	tableParams->setColumnWidth(1, 75);
+-	tableParams->setColumnWidth(2, 175);
++	tableParams->setColumnWidth(SQW_NAME, 100);
++	tableParams->setColumnWidth(SQW_TYPE, 75);
++	tableParams->setColumnWidth(SQW_VAL, 175);
+ 
+ 	int iRow=0;
+ 	for(const SqwBase::t_var& var : vecVars)
+@@ -50,31 +57,32 @@
+ 		const std::string& strVal = std::get<2>(var);
+ 
+ 
+-		QTableWidgetItem *pItemName = tableParams->item(iRow, 0);
++		QTableWidgetItem *pItemName = tableParams->item(iRow, SQW_NAME);
+ 		if(!pItemName)
+ 		{
+ 			pItemName = new QTableWidgetItem();
+-			tableParams->setItem(iRow, 0, pItemName);
++			tableParams->setItem(iRow, SQW_NAME, pItemName);
+ 		}
+-		pItemName->setFlags(pItemName->flags() & ~Qt::ItemIsEditable);
++		pItemName->setFlags((pItemName->flags() & ~Qt::ItemIsEditable) | Qt::ItemIsUserCheckable);
++		pItemName->setCheckState(Qt::Unchecked);
+ 		pItemName->setText(strName.c_str());
+ 
+ 
+-		QTableWidgetItem *pItemType = tableParams->item(iRow, 1);
++		QTableWidgetItem *pItemType = tableParams->item(iRow, SQW_TYPE);
+ 		if(!pItemType)
+ 		{
+ 			pItemType = new QTableWidgetItem();
+-			tableParams->setItem(iRow, 1, pItemType);
++			tableParams->setItem(iRow, SQW_TYPE, pItemType);
+ 		}
+ 		pItemType->setFlags(pItemType->flags() & ~Qt::ItemIsEditable);
+ 		pItemType->setText(strType.c_str());
+ 
+ 
+-		QTableWidgetItem *pItemVal = tableParams->item(iRow, 2);
++		QTableWidgetItem *pItemVal = tableParams->item(iRow, SQW_VAL);
+ 		if(!pItemVal)
+ 		{
+ 			pItemVal = new QTableWidgetItem();
+-			tableParams->setItem(iRow, 2, pItemVal);
++			tableParams->setItem(iRow, SQW_VAL, pItemVal);
+ 		}
+ 		pItemVal->setFlags(pItemVal->flags() | Qt::ItemIsEditable);
+ 		pItemVal->setText(strVal.c_str());
+@@ -88,17 +96,26 @@
+ void SqwParamDlg::SaveSqwParams()
+ {
+ 	std::vector<SqwBase::t_var> vecVars;
++	bool bAnythingSelected=0;
+ 
+ 	for(int iRow=0; iRow<tableParams->rowCount(); ++iRow)
+ 	{
++		if(tableParams->item(iRow, SQW_NAME)->checkState() != Qt::Checked)
++			continue;
++
+ 		SqwBase::t_var var;
+-		std::get<0>(var) = tableParams->item(iRow, 0)->text().toStdString();
+-		std::get<2>(var) = tableParams->item(iRow, 2)->text().toStdString();
++		std::get<0>(var) = tableParams->item(iRow, SQW_NAME)->text().toStdString();
++		std::get<2>(var) = tableParams->item(iRow, SQW_VAL)->text().toStdString();
+ 
++		//std::cerr << std::get<0>(var) << " -> " << std::get<2>(var) << std::endl;
+ 		vecVars.push_back(std::move(var));
++		bAnythingSelected = 1;
+ 	}
+ 
+-	emit SqwParamsChanged(vecVars);
++	if(bAnythingSelected)
++		emit SqwParamsChanged(vecVars);
++	else
++		QMessageBox::warning(this, "Warning", "No variable is selected for update.");
+ }
+ 
+ 
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/monteconvo/SqwParamDlg.h tastools/tools/monteconvo/SqwParamDlg.h
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/monteconvo/SqwParamDlg.h	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/monteconvo/SqwParamDlg.h	2016-06-16 09:20:17.643302880 +0200
+@@ -1,4 +1,4 @@
+-/*
++/**
+  * S(q,w) parameters dialog
+  * @author tweber
+  * @date aug-2015
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/montereso/res.cpp tastools/tools/montereso/res.cpp
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/montereso/res.cpp	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/montereso/res.cpp	2016-06-18 20:46:01.058767733 +0200
+@@ -173,8 +173,8 @@
+ 		kf[0]=_kf_x[uiRow]; kf[1]=_kf_y[uiRow]; kf[2]=_kf_z[uiRow];
+ 
+ 		Q = ki - kf;
+-		t_real_reso Ei = tl::KSQ2E * inner_prod(ki, ki);
+-		t_real_reso Ef = tl::KSQ2E * inner_prod(kf, kf);
++		t_real_reso Ei = tl::get_KSQ2E<t_real_reso>() * inner_prod(ki, ki);
++		t_real_reso Ef = tl::get_KSQ2E<t_real_reso>() * inner_prod(kf, kf);
+ 		dE = Ei - Ef;
+ 
+ 		// insert the energy into the Q vector
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/posextract/posextract.cpp tastools/tools/posextract/posextract.cpp
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/posextract/posextract.cpp	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/posextract/posextract.cpp	2016-06-18 19:02:37.198027196 +0200
+@@ -8,10 +8,13 @@
+ #include "tlibs/file/loadinstr.h"
+ #include "tlibs/log/log.h"
+ #include "tlibs/math/neutrons.h"
++#include "libs/globals.h"
+ #include <memory>
+ #include <fstream>
+ 
+ 
++using t_real = t_real_glob;
++
+ static inline void usage(const char* pcProg)
+ {
+ 	tl::log_err("Usage:\n", "\t", pcProg, " <scan file> <out file>");
+@@ -20,8 +23,9 @@
+ 
+ static inline void extract_pos(const char* pcIn, const char* pcOut)
+ {
+-	std::shared_ptr<tl::FileInstr> ptrInstr(tl::FileInstr::LoadInstr(pcIn));
+-	tl::FileInstr *pInstr = ptrInstr.get();
++	std::shared_ptr<tl::FileInstrBase<t_real>> ptrInstr(
++		tl::FileInstrBase<t_real>::LoadInstr(pcIn));
++	tl::FileInstrBase<t_real> *pInstr = ptrInstr.get();
+ 
+ 	if(!pInstr)
+ 	{
+@@ -51,13 +55,13 @@
+ 	tl::log_info("Extracting ", pInstr->GetScanCount(), " scan positions.");
+ 	for(std::size_t iScan=0; iScan<pInstr->GetScanCount(); ++iScan)
+ 	{
+-		std::array<double,5> arrPos = pInstr->GetScanHKLKiKf(iScan);
+-		double dh = arrPos[0];
+-		double dk = arrPos[1];
+-		double dl = arrPos[2];
+-		double dki = arrPos[3];
+-		double dkf = arrPos[4];
+-		double dE = (tl::k2E(dki/tl::angstrom) - tl::k2E(dkf/tl::angstrom))/tl::meV;
++		std::array<t_real,5> arrPos = pInstr->GetScanHKLKiKf(iScan);
++		t_real dh = arrPos[0];
++		t_real dk = arrPos[1];
++		t_real dl = arrPos[2];
++		t_real dki = arrPos[3];
++		t_real dkf = arrPos[4];
++		t_real dE = (tl::k2E(dki/tl::angstrom) - tl::k2E(dkf/tl::angstrom))/tl::meV;
+ 
+ 		ofstr << std::left << std::setw(20) << dh << " "
+ 			<< std::left << std::setw(20) << dk << " " 
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/res/defs.h tastools/tools/res/defs.h
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/res/defs.h	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/res/defs.h	2016-06-18 16:54:50.429347842 +0200
+@@ -37,6 +37,6 @@
+ 
+ 
+ // all algos
+-enum class ResoAlgo { CN=1, POP=2, ECK=3, VIOL=4, UNKNOWN=-1 };
++enum class ResoAlgo { CN=1, POP=2, ECK=3, VIOL=4, SIMPLE=100, UNKNOWN=-1 };
+ 
+ #endif
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/res/eck.cpp tastools/tools/res/eck.cpp
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/res/eck.cpp	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/res/eck.cpp	2016-06-18 11:17:01.708828542 +0200
+@@ -407,6 +407,7 @@
+ 
+ 
+ 	// quadratic part of quadric (matrix U)
++	// careful: factor -0.5*... missing in U matrix compared to normal gaussian!
+ 	res.reso = 2. * U /** tl::SIGMA2FWHM*tl::SIGMA2FWHM*/;
+ 	// linear (vector V) and constant (scalar W) part of quadric
+ 	res.reso_v = V;
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/res/ellipse.h tastools/tools/res/ellipse.h
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/res/ellipse.h	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/res/ellipse.h	2016-06-18 20:17:02.509840444 +0200
+@@ -175,12 +175,12 @@
+ {
+ 	ublas::vector<t_real> vec(2);
+ 
+-    vec[0] = x_hwhm*std::cos(2.*tl::get_pi<t_real>()*t)*std::cos(phi)
++	vec[0] = x_hwhm*std::cos(2.*tl::get_pi<t_real>()*t)*std::cos(phi)
+ 		- y_hwhm*std::sin(2.*tl::get_pi<t_real>()*t)*std::sin(phi) + x_offs;
+-    vec[1] = x_hwhm*std::cos(2.*tl::get_pi<t_real>()*t)*std::sin(phi)
++	vec[1] = x_hwhm*std::cos(2.*tl::get_pi<t_real>()*t)*std::sin(phi)
+ 		+ y_hwhm*std::sin(2.*tl::get_pi<t_real>()*t)*std::cos(phi) + y_offs;
+ 
+-    return vec;
++	return vec;
+ }
+ 
+ template<class t_real>
+@@ -226,8 +226,7 @@
+ static const std::string g_strLabelsHKL[] = {"h (rlu)", "k (rlu)", "l (rlu)", "E (meV)"};
+ static const std::string g_strLabelsHKLOrient[] = {"Reflex 1 (rlu)", "Reflex 2 (rlu)", "Up (rlu)", "E (meV)"};
+ 
+-//template<class t_real = t_real_reso>
+-static const std::string& ellipse_labels(int iCoord, EllipseCoordSys sys)
++static inline const std::string& ellipse_labels(int iCoord, EllipseCoordSys sys)
+ {
+ 	switch(sys)
+ 	{
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/res/ResoDlg.cpp tastools/tools/res/ResoDlg.cpp
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/res/ResoDlg.cpp	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/res/ResoDlg.cpp	2016-06-18 17:23:14.521276572 +0200
+@@ -5,8 +5,6 @@
+  * @license GPLv2
+  */
+ 
+-// TODO: send locally changed params back to taz
+-
+ #include "ResoDlg.h"
+ #include <iostream>
+ #include <fstream>
+@@ -82,6 +80,9 @@
+ 		spinTofPulseSig, spinTofMonoSig, spinTofDetSig,
+ 		spinTof2thI, spinTofphI, spinTofphF,
+ 		spinTof2thISig, spinTof2thFSig, spinTofphISig, spinTofphFSig,
++
++		spinSigKi, spinSigKi_z,
++		spinSigKf, spinSigKf_z,
+ 	};
+ 
+ 	m_vecSpinNames = {"reso/mono_d", "reso/mono_mosaic", "reso/ana_d",
+@@ -108,6 +109,9 @@
+ 		"reso/viol_time_pulse_sig", "reso/viol_time_mono_sig", "reso/viol_time_det_sig",
+ 		"reso/viol_angle_tt_i", "reso/viol_angle_ph_i", "reso/viol_angle_ph_f",
+ 		"reso/viol_angle_tt_i_sig", "reso/viol_angle_tt_f_sig", "reso/viol_angle_ph_i_sig", "reso/viol_angle_ph_f_sig",
++
++		"reso/simple_sig_ki", "reso/simple_sig_ki_z",
++		"reso/simple_sig_kf", "reso/simple_sig_kf_z",
+ 	};
+ 
+ 	m_vecPosEditBoxes = {editE, editQ, editKi, editKf};
+@@ -173,6 +177,8 @@
+ 	comboAlgo->addItem("TAS: Eckold-Sobolev", static_cast<int>(ResoAlgo::ECK));
+ 	comboAlgo->insertSeparator(3);
+ 	comboAlgo->addItem("TOF: Violini", static_cast<int>(ResoAlgo::VIOL));
++	comboAlgo->insertSeparator(5);
++	comboAlgo->addItem("Simple", static_cast<int>(ResoAlgo::SIMPLE));
+ }
+ 
+ void ResoDlg::SaveRes()
+@@ -264,14 +270,14 @@
+ 		const t_real_reso dMono = spinMonod->value();
+ 		const t_real_reso dAna = spinAnad->value();
+ 
+-		m_tofparams.ki = m_tasparams.ki = ki;
+-		m_tofparams.kf = m_tasparams.kf = kf;
+-		m_tofparams.E = m_tasparams.E = E;
+-		m_tofparams.Q = m_tasparams.Q = Q;
+-
+-		m_tofparams.twotheta = m_tasparams.twotheta = twotheta;
+-		m_tofparams.angle_ki_Q = m_tasparams.angle_ki_Q = kiQ;
+-		m_tofparams.angle_kf_Q = m_tasparams.angle_kf_Q = kfQ;
++		m_simpleparams.ki = m_tofparams.ki = m_tasparams.ki = ki;
++		m_simpleparams.kf = m_tofparams.kf = m_tasparams.kf = kf;
++		m_simpleparams.E = m_tofparams.E = m_tasparams.E = E;
++		m_simpleparams.Q = m_tofparams.Q = m_tasparams.Q = Q;
++
++		m_simpleparams.twotheta = m_tofparams.twotheta = m_tasparams.twotheta = twotheta;
++		m_simpleparams.angle_ki_Q = m_tofparams.angle_ki_Q = m_tasparams.angle_ki_Q = kiQ;
++		m_simpleparams.angle_kf_Q = m_tofparams.angle_kf_Q = m_tasparams.angle_kf_Q = kfQ;
+ 
+ 		m_tasparams.thetam = 0.5 * tl::get_mono_twotheta(ki, dMono*angs, 1);
+ 		m_tasparams.thetaa = 0.5 * tl::get_mono_twotheta(kf, dAna*angs, 1);
+@@ -296,8 +302,10 @@
+ 		m_bEll4dCurrent = 0;
+ 		if(m_bDontCalc) return;
+ 
+-		EckParams& cn = m_tasparams;
+-		ViolParams& tof = m_tofparams;
++		EckParams &cn = m_tasparams;
++		ViolParams &tof = m_tofparams;
++		SimpleResoParams &simple = m_simpleparams;
++
+ 		ResoResults &res = m_res;
+ 
+ 		// CN
+@@ -449,6 +457,13 @@
+ 
+ 		tof.det_shape = radioTofDetSph->isChecked() ? TofDetShape::SPH : TofDetShape::CYL;
+ 
++
++		// Simple
++		simple.sig_ki = t_real_reso(spinSigKi->value()) / angs;
++		simple.sig_kf = t_real_reso(spinSigKf->value()) / angs;
++		simple.sig_ki_z = t_real_reso(spinSigKi_z->value()) / angs;
++		simple.sig_kf_z = t_real_reso(spinSigKf_z->value()) / angs;
++
+ 		//tl::log_debug(m_tofparams.angle_ki_Q);
+ 		//tl::log_debug(m_tofparams.angle_kf_Q);
+ 		//tl::log_debug(m_tofparams.twotheta);
+@@ -461,6 +476,7 @@
+ 			case ResoAlgo::POP: res = calc_pop(cn); break;
+ 			case ResoAlgo::ECK: res = calc_eck(cn); break;
+ 			case ResoAlgo::VIOL: res = calc_viol(tof); break;
++			case ResoAlgo::SIMPLE: res = calc_simplereso(simple); break;
+ 			default: tl::log_err("Unknown resolution algorithm selected."); return;
+ 		}
+ 
+@@ -904,13 +920,13 @@
+ 
+ 	try
+ 	{
+-		m_tofparams.twotheta = m_tasparams.twotheta =
++		m_simpleparams.twotheta = m_tofparams.twotheta = m_tasparams.twotheta =
+ 			units::abs(t_real_reso(parms.d2Theta) * rads);
+ 		//std::cout << parms.dTheta/M_PI*180. << " " << parms.d2Theta/M_PI*180. << std::endl;
+ 
+-		m_tofparams.ki = m_tasparams.ki = t_real_reso(parms.dki) / angs;
+-		m_tofparams.kf = m_tasparams.kf = t_real_reso(parms.dkf) / angs;
+-		m_tofparams.E = m_tasparams.E = t_real_reso(parms.dE) * meV;
++		m_simpleparams.ki = m_tofparams.ki = m_tasparams.ki = t_real_reso(parms.dki) / angs;
++		m_simpleparams.kf = m_tofparams.kf = m_tasparams.kf = t_real_reso(parms.dkf) / angs;
++		m_simpleparams.E = m_tofparams.E = m_tasparams.E = t_real_reso(parms.dE) * meV;
+ 
+ 		//m_dAngleQVec0 = parms.dAngleQVec0;
+ 		//std::cout << "qvec0 in rlu: " << m_dAngleQVec0 << std::endl;
+@@ -928,13 +944,13 @@
+ 			dQ = ublas::norm_2(vecQ);
+ 		}
+ 
+-		m_tofparams.Q = m_tasparams.Q = dQ / angs;
++		m_simpleparams.Q = m_tofparams.Q = m_tasparams.Q = dQ / angs;
+ 		//std::cout << "qvec0 in 1/A: " << m_dAngleQVec0 << std::endl;
+ 
+ 
+-		m_tofparams.angle_ki_Q = m_tasparams.angle_ki_Q =
++		m_simpleparams.angle_ki_Q = m_tofparams.angle_ki_Q = m_tasparams.angle_ki_Q =
+ 			/*M_PI*rads -*/ tl::get_angle_ki_Q(m_tasparams.ki, m_tasparams.kf, m_tasparams.Q, 1);
+-		m_tofparams.angle_kf_Q = m_tasparams.angle_kf_Q =
++		m_simpleparams.angle_kf_Q = m_tofparams.angle_kf_Q = m_tasparams.angle_kf_Q =
+ 			/*M_PI*rads -*/ tl::get_angle_kf_Q(m_tasparams.ki, m_tasparams.kf, m_tasparams.Q, 1);
+ 		//m_tasparams.angle_ki_Q = units::abs(m_tasparams.angle_ki_Q);
+ 		//m_tasparams.angle_kf_Q = units::abs(m_tasparams.angle_kf_Q);
+@@ -974,7 +990,7 @@
+ 
+ 	m_tasparams.twotheta = t_real_reso(parms.dSampleTT) * rads;
+ 	m_tasparams.twotheta = units::abs(m_tasparams.twotheta);
+-	m_tofparams.twotheta = m_tasparams.twotheta;
++	m_simpleparams.twotheta = m_tofparams.twotheta = m_tasparams.twotheta;
+ 
+ 	//std::cout << parms.dMonoT/M_PI*180. << ", " << parms.dAnaT/M_PI*180. << std::endl;
+ 	//std::cout << parms.dSampleTT/M_PI*180. << std::endl;
+@@ -1177,6 +1193,7 @@
+ 			tabWidget->setTabEnabled(1,0);
+ 			tabWidget->setTabEnabled(2,0);
+ 			tabWidget->setTabEnabled(3,0);
++			tabWidget->setTabEnabled(4,0);
+ 			strAlgo = "<b>M. J. Cooper and <br>R. Nathans</b><br>\n";
+ 			strAlgo += "<a href=http://dx.doi.org/10.1107/S0365110X67002816>"
+ 				"Acta Cryst. 23, <br>pp. 357-367</a><br>\n";
+@@ -1189,6 +1206,7 @@
+ 			tabWidget->setTabEnabled(1,1);
+ 			tabWidget->setTabEnabled(2,0);
+ 			tabWidget->setTabEnabled(3,0);
++			tabWidget->setTabEnabled(4,0);
+ 			strAlgo = "<b>M. Popovici</b><br>\n";
+ 			strAlgo += "<a href=http://dx.doi.org/10.1107/S0567739475001088>"
+ 				"Acta Cryst. A 31, <br>pp. 507-513</a><br>\n";
+@@ -1201,6 +1219,7 @@
+ 			tabWidget->setTabEnabled(1,1);
+ 			tabWidget->setTabEnabled(2,1);
+ 			tabWidget->setTabEnabled(3,0);
++			tabWidget->setTabEnabled(4,0);
+ 			strAlgo = "<b>G. Eckold and <br>O. Sobolev</b><br>\n";
+ 			strAlgo += "<a href=http://dx.doi.org/10.1016/j.nima.2014.03.019>"
+ 				"NIM A 752, <br>pp. 54-64</a><br>\n";
+@@ -1213,12 +1232,23 @@
+ 			tabWidget->setTabEnabled(1,0);
+ 			tabWidget->setTabEnabled(2,0);
+ 			tabWidget->setTabEnabled(3,1);
++			tabWidget->setTabEnabled(4,0);
+ 			strAlgo = "<b>N. Violini et al.</b><br>\n";
+ 			strAlgo += "<a href=http://dx.doi.org/10.1016/j.nima.2013.10.042>"
+ 				"NIM A 736, <br>pp. 31-39</a><br>\n";
+ 			strAlgo += "2014";
+ 			break;
+ 		}
++		case ResoAlgo::SIMPLE:
++		{
++			tabWidget->setTabEnabled(0,0);
++			tabWidget->setTabEnabled(1,0);
++			tabWidget->setTabEnabled(2,0);
++			tabWidget->setTabEnabled(3,0);
++			tabWidget->setTabEnabled(4,1);
++			strAlgo = "<b>Simple</b><br>\n";
++			break;
++		}
+ 		default:
+ 		{
+ 			strAlgo += "<i>unknown</i>";
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/res/ResoDlg.h tastools/tools/res/ResoDlg.h
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/res/ResoDlg.h	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/res/ResoDlg.h	2016-06-18 16:48:42.728363220 +0200
+@@ -21,6 +21,7 @@
+ #include "pop.h"
+ #include "eck.h"
+ #include "viol.h"
++#include "simple.h"
+ #include "tlibs/math/linalg.h"
+ #include "tlibs/file/prop.h"
+ #ifndef NO_3D
+@@ -84,6 +85,8 @@
+ 
+ 	EckParams m_tasparams;
+ 	ViolParams m_tofparams;
++	SimpleResoParams m_simpleparams;
++
+ 	ResoResults m_res;
+ 	ublas::matrix<t_real_reso> m_resoHKL, m_resoOrient;
+ 	ublas::vector<t_real_reso> m_Q_avgHKL, m_Q_avgOrient;
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/res/simple.cpp tastools/tools/res/simple.cpp
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/res/simple.cpp	1970-01-01 01:00:00.000000000 +0100
++++ tastools/tools/res/simple.cpp	2016-06-18 17:23:52.495274984 +0200
+@@ -0,0 +1,143 @@
++/**
++ * simple resolution calculation including only ki and kf errors
++ * @author Tobias Weber <tobias.weber@tum.de>
++ * @date jun-2016
++ * @license GPLv2
++ */
++
++#include "simple.h"
++#include "ellipse.h"
++#include "tlibs/math/linalg.h"
++#include "tlibs/math/geo.h"
++#include "tlibs/math/math.h"
++#include "tlibs/log/log.h"
++
++#include <string>
++#include <iostream>
++
++typedef t_real_reso t_real;
++typedef ublas::matrix<t_real> t_mat;
++typedef ublas::vector<t_real> t_vec;
++
++using angle = tl::t_angle_si<t_real>;
++using wavenumber = tl::t_wavenumber_si<t_real>;
++using velocity = tl::t_velocity_si<t_real>;
++using t_time = tl::t_time_si<t_real>;
++using energy = tl::t_energy_si<t_real>;
++using length = tl::t_length_si<t_real>;
++using mass = tl::t_mass_si<t_real>;
++
++static const auto rads = tl::get_one_radian<t_real>();
++static const length angs = tl::get_one_angstrom<t_real>();
++static const energy meV = tl::get_one_meV<t_real>();
++static const t_time sec = tl::get_one_second<t_real>();
++static const length meter = tl::get_one_meter<t_real>();
++
++
++ResoResults calc_simplereso(const SimpleResoParams& params)
++{
++	ResoResults res;
++	res.Q_avg.resize(4);
++
++	//const energy E = params.E;
++	//const wavenumber Q = params.Q;
++	const angle& tt = params.twotheta;
++	const wavenumber &ki = params.ki, &kf = params.kf;
++	const energy E = tl::get_energy_transfer(ki, kf);
++	const wavenumber Q = tl::get_sample_Q(ki, kf, tt);
++
++	res.Q_avg[0] = Q * angs;
++	res.Q_avg[1] = 0.;
++	res.Q_avg[2] = 0.;
++	res.Q_avg[3] = E / meV;
++
++#ifndef NDEBUG
++	tl::log_debug("ki = ", ki, ", kf = ", kf);
++	tl::log_debug("Q = ", Q, ", E = ", E);
++#endif
++
++	const mass mn = tl::get_m_n<t_real>();
++	const auto hbar = tl::get_hbar<t_real>();
++
++
++
++	// --------------------------------------------------------------------
++	// sigmas
++	const wavenumber& sig_kix = params.sig_ki;
++	const wavenumber sig_kiy = t_real(0)/angs;
++	const wavenumber sig_kiz = params.sig_ki_z;
++
++	const wavenumber sig_kfx = params.sig_kf * units::cos(tt);
++	const wavenumber sig_kfy = params.sig_kf * units::sin(tt);
++	const wavenumber sig_kfz = params.sig_kf_z;
++
++	t_mat matSigSq = tl::diag_matrix({
++		sig_kix*sig_kix * angs*angs,
++		sig_kiy*sig_kiy * angs*angs,
++		sig_kiz*sig_kiz * angs*angs,
++		sig_kfx*sig_kfx * angs*angs,
++		sig_kfy*sig_kfy * angs*angs,
++		sig_kfz*sig_kfz * angs*angs });
++
++
++	// --------------------------------------------------------------------
++	// values
++	const wavenumber& kix = ki;
++	const wavenumber kiy = t_real(0)/angs;
++	const wavenumber kiz = t_real(0)/angs;
++
++	const wavenumber kfx = kf * units::cos(tt);
++	const wavenumber kfy = kf * units::sin(tt);
++	const wavenumber kfz = t_real(0)/angs;
++
++	// Matrix of derivatives of:
++	// Q = ki - kf and E = hbar^2/(2mn)*(ki^2 - kf^2)
++	t_mat matJacobiInstr(4, matSigSq.size1(), t_real(0));
++	matJacobiInstr(0,0) = matJacobiInstr(1,1) = matJacobiInstr(2,2) = t_real(1);
++	matJacobiInstr(0,3) = matJacobiInstr(1,4) = matJacobiInstr(2,5) = t_real(-1);
++	matJacobiInstr(3,0) = hbar*hbar/mn * kix /angs/meV;
++	matJacobiInstr(3,1) = hbar*hbar/mn * kiy /angs/meV;
++	matJacobiInstr(3,2) = hbar*hbar/mn * kiz /angs/meV;
++	matJacobiInstr(3,3) = -hbar*hbar/mn * kfx /angs/meV;
++	matJacobiInstr(3,4) = -hbar*hbar/mn * kfy /angs/meV;
++	matJacobiInstr(3,5) = -hbar*hbar/mn * kfz /angs/meV;
++
++	t_mat matSigQE = tl::transform_inv(matSigSq, matJacobiInstr, true);
++	if(!tl::inverse(matSigQE, res.reso))
++	{
++		//tl::log_err(matSigQE);
++		res.bOk = false;
++		res.strErr = "Jacobi matrix cannot be inverted.";
++		return res;
++	}
++
++#ifndef NDEBUG
++	tl::log_debug("J_instr = ", matJacobiInstr);
++	tl::log_debug("J_QE = ", matSigQE);
++	tl::log_debug("Reso = ", res.reso);
++#endif
++	// --------------------------------------------------------------------
++
++	// transform from  (ki, ki_perp, Qz)  to  (Q_perp, Q_para, Q_z)  system
++	t_mat matKiQ = tl::rotation_matrix_2d(-params.angle_ki_Q / rads);
++	matKiQ.resize(4,4, true);
++	matKiQ(2,2) = matKiQ(3,3) = 1.;
++	matKiQ(2,0) = matKiQ(2,1) = matKiQ(2,3) = matKiQ(3,0) = matKiQ(3,1) =
++	matKiQ(3,2) = matKiQ(0,2) = matKiQ(0,3) = matKiQ(1,2) = matKiQ(1,3) = 0.;
++
++	res.reso = tl::transform(res.reso, matKiQ, true);
++	//res.reso *= tl::SIGMA2FWHM*tl::SIGMA2FWHM;
++
++	res.dResVol = tl::get_ellipsoid_volume(res.reso);
++	res.dR0 = 0.;   // TODO
++
++	// Bragg widths
++	for(unsigned int i=0; i<4; ++i)
++		res.dBraggFWHMs[i] = tl::SIGMA2FWHM/sqrt(res.reso(i,i));
++
++	res.reso_v = ublas::zero_vector<t_real>(4);
++	res.reso_s = 0.;
++
++	res.bOk = true;
++	return res;
++}
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/res/simple.h tastools/tools/res/simple.h
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/res/simple.h	1970-01-01 01:00:00.000000000 +0100
++++ tastools/tools/res/simple.h	2016-06-18 17:08:44.979312939 +0200
+@@ -0,0 +1,35 @@
++/**
++ * simple resolution calculation including only ki and kf errors
++ * @author Tobias Weber <tobias.weber@tum.de>
++ * @date jun-2016
++ * @license GPLv2
++ */
++
++#ifndef __SIMPLERESO_H__
++#define __SIMPLERESO_H__
++
++#include "defs.h"
++#include "tlibs/math/neutrons.h"
++
++namespace units = boost::units;
++namespace codata = boost::units::si::constants::codata;
++
++
++struct SimpleResoParams
++{
++	// values
++	tl::t_wavenumber_si<t_real_reso> ki, kf, Q;
++	tl::t_energy_si<t_real_reso> E;
++
++	tl::t_angle_si<t_real_reso> twotheta,
++		angle_ki_Q, angle_kf_Q;
++
++	// sigmas
++	tl::t_wavenumber_si<t_real_reso> sig_ki, sig_kf;
++	tl::t_wavenumber_si<t_real_reso> sig_ki_z, sig_kf_z;
++};
++
++
++extern ResoResults calc_simplereso(const SimpleResoParams& params);
++
++#endif
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/res/viol.cpp tastools/tools/res/viol.cpp
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/res/viol.cpp	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/res/viol.cpp	2016-06-17 16:59:04.183017480 +0200
+@@ -274,8 +274,8 @@
+ 	for(std::size_t iDeriv=0; iDeriv<vecEderivs.size(); ++iDeriv)
+ 		matJacobiInstr(3, iDeriv) = vecEderivs[iDeriv]();
+ 
+-	t_mat matJacobiQE = tl::transform_inv(matSigSq, matJacobiInstr, true);
+-	if(!tl::inverse(matJacobiQE, res.reso))
++	t_mat matSigQE = tl::transform_inv(matSigSq, matJacobiInstr, true);
++	if(!tl::inverse(matSigQE, res.reso))
+ 	{
+ 		res.bOk = false;
+ 		res.strErr = "Jacobi matrix cannot be inverted.";
+@@ -284,7 +284,7 @@
+ 
+ #ifndef NDEBUG
+ 	tl::log_debug("J_instr = ", matJacobiInstr);
+-	tl::log_debug("J_QE = ", matJacobiQE);
++	tl::log_debug("J_QE = ", matSigQE);
+ 	tl::log_debug("Reso = ", res.reso);
+ #endif
+ 	// --------------------------------------------------------------------
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/taz/nicos.h tastools/tools/taz/nicos.h
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/taz/nicos.h	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/taz/nicos.h	2016-06-18 18:54:43.135047022 +0200
+@@ -20,7 +20,7 @@
+ 	protected:
+ 		QSettings* m_pSettings = 0;
+ 
+-		tl::TcpClient m_tcp;
++		tl::TcpTxtClient<> m_tcp;
+ 		std::vector<std::string> m_vecKeys;
+ 		t_mapCacheVal m_mapCache;
+ 
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/taz/scattering_triangle.cpp tastools/tools/taz/scattering_triangle.cpp
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/taz/scattering_triangle.cpp	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/taz/scattering_triangle.cpp	2016-06-16 10:17:57.483376423 +0200
+@@ -194,9 +194,10 @@
+ 	this->update();
+ }
+ 
+-void ScatteringTriangle::SetEwaldSphereVisible(bool bVisible)
++void ScatteringTriangle::SetEwaldSphereVisible(EwaldSphere iEw)
+ {
+-	m_bShowEwaldSphere = bVisible;
++	m_bShowEwaldSphere = (iEw != EWALD_NONE);
++	m_bEwaldAroundKi = (iEw == EWALD_KI);
+ 	this->update();
+ }
+ 
+@@ -458,9 +459,9 @@
+ 	// Ewald sphere
+ 	if(m_bShowEwaldSphere)
+ 	{
+-		t_real dKiLen = lineKi.length();
++		t_real dKLen = m_bEwaldAroundKi ? lineKi.length() : lineKf.length();
+ 		painter->setPen(Qt::darkCyan);
+-		painter->drawEllipse(ptKiKf, dKiLen, dKiLen);
++		painter->drawEllipse(ptKiKf, dKLen, dKLen);
+ 	}
+ }
+ 
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/taz/scattering_triangle.h tastools/tools/taz/scattering_triangle.h
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/taz/scattering_triangle.h	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/taz/scattering_triangle.h	2016-06-16 10:16:20.360374358 +0200
+@@ -50,6 +50,13 @@
+ 	NODE_OTHER
+ };
+ 
++enum EwaldSphere : int
++{
++	EWALD_NONE,
++	EWALD_KI,
++	EWALD_KF
++};
++
+ class ScatteringTriangle;
+ class ScatteringTriangleNode : public QGraphicsItem
+ {
+@@ -124,6 +131,7 @@
+ 
+ 		bool m_bqVisible = 0;
+ 		bool m_bShowEwaldSphere = 1;
++		bool m_bEwaldAroundKi = 0;
+ 
+ 	protected:
+ 		virtual QRectF boundingRect() const override;
+@@ -172,7 +180,7 @@
+ 
+ 		void SetqVisible(bool bVisible);
+ 		void SetBZVisible(bool bVisible);
+-		void SetEwaldSphereVisible(bool bVisible);
++		void SetEwaldSphereVisible(EwaldSphere iEw);
+ 
+ 		const tl::Powder<int,t_real_glob>& GetPowder() const { return m_powder; }
+ 		const tl::Kd<t_real_glob>& GetKdLattice() const { return m_kdLattice; }
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/taz/sics.h tastools/tools/taz/sics.h
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/taz/sics.h	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/taz/sics.h	2016-06-18 18:54:36.899047283 +0200
+@@ -23,7 +23,7 @@
+ 	protected:
+ 		QSettings* m_pSettings = 0;
+ 
+-		tl::TcpClient m_tcp;
++		tl::TcpTxtClient<> m_tcp;
+ 		t_mapCacheVal m_mapCache;
+ 
+ 		std::string m_strUser, m_strPass;
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/taz/taz.cpp tastools/tools/taz/taz.cpp
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/taz/taz.cpp	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/taz/taz.cpp	2016-06-18 20:20:57.205830628 +0200
+@@ -39,11 +39,11 @@
+ 
+ TazDlg::TazDlg(QWidget* pParent)
+ 	: QMainWindow(pParent), m_settings("tobis_stuff", "takin"),
+-		m_sceneRecip(this),
+ 		m_pSettingsDlg(new SettingsDlg(this, &m_settings)),
+ 		m_pStatusMsg(new QLabel(this)),
+ 		m_pCoordQStatusMsg(new QLabel(this)),
+ 		m_pCoordCursorStatusMsg(new QLabel(this)),
++		m_sceneRecip(this),
+ 		m_dlgRecipParam(this, &m_settings),
+ 		m_dlgRealParam(this, &m_settings),
+ 		m_pGotoDlg(new GotoDlg(this, &m_settings))
+@@ -53,7 +53,6 @@
+ 	const bool bSmallqVisible = 0;
+ 	const bool bBZVisible = 1;
+ 	const bool bWSVisible = 1;
+-	const bool bEwald = 1;
+ 
+ 	this->setupUi(this);
+ 	this->setWindowTitle(s_strTitle.c_str());
+@@ -376,31 +375,41 @@
+ 	m_pBZ->setChecked(bBZVisible);
+ 	m_pMenuViewRecip->addAction(m_pBZ);
+ 
+-	m_pEwaldSphere = new QAction("Show Ewald Sphere", this);
+-	//m_pEwaldSphere->setIcon(load_icon("res/brillouin.svg"));
+-	m_pEwaldSphere->setCheckable(1);
+-	m_pEwaldSphere->setChecked(bEwald);
+-	m_pMenuViewRecip->addAction(m_pEwaldSphere);
++
++	QMenu *pMenuEwald = new QMenu("Ewald Sphere", this);
++	QActionGroup *pGroupEwald = new QActionGroup(this);
++	m_pEwaldSphereNone = new QAction("Disabled", this);
++	m_pEwaldSphereKi = new QAction("Around ki", this);
++	m_pEwaldSphereKf = new QAction("Around kf", this);
++	for(QAction* pAct : {m_pEwaldSphereNone, m_pEwaldSphereKi, m_pEwaldSphereKf})
++	{
++		pAct->setCheckable(1);
++		pGroupEwald->addAction(pAct);
++	}
++
++	m_pEwaldSphereKf->setChecked(1);
++	pMenuEwald->addActions(pGroupEwald->actions());
++	m_pMenuViewRecip->addMenu(pMenuEwald);
++
+ 
+ 	m_pMenuViewRecip->addSeparator();
+ 
+ 	QMenu *pMenuProj = new QMenu("Projection", this);
+ 	pMenuProj->setTearOffEnabled(1);
++	QActionGroup *pGroupProj = new QActionGroup(this);
+ 
+ 	m_pProjGnom = new QAction("Gnomonic", this);
+ 	m_pProjStereo = new QAction("Stereographic", this);
+ 	m_pProjPara = new QAction("Parallel", this);
+ 	m_pProjPersp = new QAction("Perspectivic", this);
+-	m_pProjGnom->setCheckable(1);
+-	m_pProjStereo->setCheckable(1);
+-	m_pProjPara->setCheckable(1);
+-	m_pProjPersp->setCheckable(1);
++
++	for(QAction *pAct : {m_pProjGnom, m_pProjStereo, m_pProjPara, m_pProjPersp})
++	{
++		pAct->setCheckable(1);
++		pGroupProj->addAction(pAct);
++	}
++
+ 	m_pProjStereo->setChecked(1);
+-	QActionGroup *pGroupProj = new QActionGroup(this);
+-	pGroupProj->addAction(m_pProjStereo);
+-	pGroupProj->addAction(m_pProjGnom);
+-	pGroupProj->addAction(m_pProjPara);
+-	pGroupProj->addAction(m_pProjPersp);
+ 	pMenuProj->addActions(pGroupProj->actions());
+ 
+ 	m_pMenuViewRecip->addMenu(pMenuProj);
+@@ -619,7 +628,10 @@
+ 	QObject::connect(m_pSmallq, SIGNAL(toggled(bool)), this, SLOT(EnableSmallq(bool)));
+ 	QObject::connect(m_pBZ, SIGNAL(toggled(bool)), this, SLOT(EnableBZ(bool)));
+ 	QObject::connect(m_pWS, SIGNAL(toggled(bool)), this, SLOT(EnableWS(bool)));
+-	QObject::connect(m_pEwaldSphere, SIGNAL(toggled(bool)), this, SLOT(ShowEwaldSphere(bool)));
++
++	for(QAction* pAct : {m_pEwaldSphereNone, m_pEwaldSphereKi, m_pEwaldSphereKf})
++		QObject::connect(pAct, SIGNAL(triggered()), this, SLOT(ShowEwaldSphere()));
++
+ 	QObject::connect(m_pShowRealQDir, SIGNAL(toggled(bool)), this, SLOT(EnableRealQDir(bool)));
+ 
+ 	QObject::connect(m_pSnapSmallq, SIGNAL(toggled(bool)), &m_sceneRecip, SLOT(setSnapq(bool)));
+@@ -777,7 +789,7 @@
+ 
+ 	m_sceneRecip.GetTriangle()->SetqVisible(bSmallqVisible);
+ 	m_sceneRecip.GetTriangle()->SetBZVisible(bBZVisible);
+-	m_sceneRecip.GetTriangle()->SetEwaldSphereVisible(bEwald);
++	m_sceneRecip.GetTriangle()->SetEwaldSphereVisible(EWALD_KF);
+ 	m_sceneRealLattice.GetLattice()->SetWSVisible(bWSVisible);
+ 	m_sceneRecip.emitUpdate();
+ 	//m_sceneRecip.emitAllParams();
+@@ -1174,9 +1186,16 @@
+ 	m_sceneRealLattice.GetLattice()->SetWSVisible(bEnable);
+ }
+ 
+-void TazDlg::ShowEwaldSphere(bool bEnable)
++void TazDlg::ShowEwaldSphere()
+ {
+-	m_sceneRecip.GetTriangle()->SetEwaldSphereVisible(bEnable);
++	EwaldSphere iEw = EWALD_NONE;
++	if(m_pEwaldSphereNone->isChecked())
++		iEw = EWALD_NONE;
++	else if(m_pEwaldSphereKi->isChecked())
++		iEw = EWALD_KI;
++	else if(m_pEwaldSphereKf->isChecked())
++		iEw = EWALD_KF;
++	m_sceneRecip.GetTriangle()->SetEwaldSphereVisible(iEw);
+ }
+ 
+ void TazDlg::EnableRealQDir(bool bEnable)
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/taz/taz_file.cpp tastools/tools/taz/taz_file.cpp
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/taz/taz_file.cpp	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/taz/taz_file.cpp	2016-06-18 18:58:50.860036662 +0200
+@@ -212,9 +212,13 @@
+ 	if(bOk)
+ 		m_pBZ->setChecked(bBZEnabled!=0);
+ 
+-	int bEwaldEnabled = xml.Query<int>((strXmlRoot + "recip/ewald_sphere").c_str(), 0, &bOk);
++	int iEwald = xml.Query<int>((strXmlRoot + "recip/ewald_sphere").c_str(), 0, &bOk);
+ 	if(bOk)
+-		m_pEwaldSphere->setChecked(bEwaldEnabled!=0);
++	{
++		if(iEwald == EWALD_NONE) m_pEwaldSphereNone->setChecked(1);
++		else if(iEwald == EWALD_KI) m_pEwaldSphereKi->setChecked(1);
++		else if(iEwald == EWALD_KF) m_pEwaldSphereKf->setChecked(1);
++	}
+ 
+ 	int bWSEnabled = xml.Query<int>((strXmlRoot + "real/enable_ws").c_str(), 0, &bOk);
+ 	if(bOk)
+@@ -393,8 +397,10 @@
+ 	bool bBZEnabled = m_pBZ->isChecked();
+ 	mapConf[strXmlRoot + "recip/enable_bz"] = (bBZEnabled ? "1" : "0");
+ 
+-	bool bEwaldEnabled = m_pEwaldSphere->isChecked();
+-	mapConf[strXmlRoot + "recip/ewald_sphere"] = (bEwaldEnabled ? "1" : "0");
++	int iEw = EWALD_NONE;
++	if(m_pEwaldSphereKi->isChecked()) iEw = EWALD_KI;
++	else if(m_pEwaldSphereKf->isChecked()) iEw = EWALD_KF;
++	mapConf[strXmlRoot + "recip/ewald_sphere"] = tl::var_to_str(iEw);
+ 
+ 	bool bWSEnabled = m_pWS->isChecked();
+ 	mapConf[strXmlRoot + "real/enable_ws"] = (bWSEnabled ? "1" : "0");
+@@ -541,8 +547,9 @@
+ 	std::size_t iScanNum = 0;
+ 	try
+ 	{
+-		std::unique_ptr<tl::FileInstr> ptrDat(tl::FileInstr::LoadInstr(pcFile));
+-		tl::FileInstr* pdat = ptrDat.get();
++		std::unique_ptr<tl::FileInstrBase<t_real_glob>> ptrDat(
++			tl::FileInstrBase<t_real_glob>::LoadInstr(pcFile));
++		tl::FileInstrBase<t_real_glob>* pdat = ptrDat.get();
+ 		if(!pdat)
+ 			return false;
+ 
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/taz/taz.h tastools/tools/taz/taz.h
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/taz/taz.h	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/taz/taz.h	2016-06-16 10:15:29.578373279 +0200
+@@ -74,7 +74,8 @@
+ 		QAction *m_pSmallq = nullptr, *m_pSnapSmallq = nullptr;
+ 		QAction *m_pGoto = nullptr;
+ 		QAction *m_pBZ = nullptr, *m_pWS = nullptr;
+-		QAction *m_pEwaldSphere = nullptr;
++		QAction *m_pEwaldSphereNone = nullptr,
++			*m_pEwaldSphereKi = nullptr, *m_pEwaldSphereKf = nullptr;
+ 		QAction *m_pShowRealQDir = nullptr;
+ 		QAction *m_pProjGnom = nullptr, *m_pProjStereo = nullptr,
+ 			*m_pProjPara = nullptr, *m_pProjPersp = nullptr;
+@@ -207,7 +208,7 @@
+ 		void EnableBZ(bool bEnable);
+ 		void EnableWS(bool bEnable);
+ 		void EnableRealQDir(bool bEnable);
+-		void ShowEwaldSphere(bool bEnable);
++		void ShowEwaldSphere();
+ 		void RecipProjChanged();
+ 
+ 		void RecipContextMenu(const QPoint&);
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/test/tst_cov.cpp tastools/tools/test/tst_cov.cpp
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/test/tst_cov.cpp	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/test/tst_cov.cpp	2016-06-18 19:20:32.140982239 +0200
+@@ -1,11 +1,12 @@
+-// clang -o tst_cov tst_cov.cpp -lstdc++ -lm -std=c++11
++// clang -I../.. -I. -o tst_cov tst_cov.cpp -lstdc++ -lm -std=c++11
+ 
+ #include <iostream>
+ #include <vector>
+ #include <initializer_list>
+ #include <type_traits>
+-#include "../helper/linalg.h"
++#include "tlibs/math/linalg.h"
+ 
++using namespace tl;
+ 
+ int main()
+ {
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/test/tst_geo.cpp tastools/tools/test/tst_geo.cpp
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/test/tst_geo.cpp	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/test/tst_geo.cpp	2016-06-18 19:28:09.874963095 +0200
+@@ -1,7 +1,10 @@
+-// gcc -DUSE_LAPACK -o tst_geo tst_geo.cpp ../helper/linalg.cpp -std=c++11 -lstdc++ -lm -I/usr/include/lapacke -llapacke -llapack
++// gcc -DUSE_LAPACK -o tst_geo tst_geo.cpp -std=c++11 -lstdc++ -lm -I../.. -I. -I/usr/include/lapacke ../../tlibs/log/log.cpp ../../tlibs/math/linalg2.cpp -llapacke -llapack
+ 
+-#include "../helper/geo.h"
+-#include "../helper/math.h"
++#include "tlibs/math/geo.h"
++#include "tlibs/math/math.h"
++#include "tlibs/math/linalg2.h"
++
++using namespace tl;
+ 
+ typedef ublas::vector<double> vec;
+ 
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/test/tst_hkl.cpp tastools/tools/test/tst_hkl.cpp
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/test/tst_hkl.cpp	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/test/tst_hkl.cpp	2016-06-18 19:30:18.718957706 +0200
+@@ -1,4 +1,9 @@
+-#include "../helper/lattice.h"
++// gcc -I../.. -o tst_hkl tst_hkl.cpp ../../tlibs/log/log.cpp -lstdc++ -std=c++11 -lm 
++
++#include <iostream>
++#include "tlibs/math/lattice.h"
++
++using namespace tl;
+ 
+ typedef ublas::vector<double> t_vec;
+ 
+@@ -38,8 +43,7 @@
+ 
+ 	try
+ 	{
+-		get_tas_angles<double>(lat, vec1,vec2, dKi,dKf, dh,dk,dl, 1, &dTheta, 
+-&d2Theta);
++		get_tas_angles<double>(lat, vec1,vec2, dKi,dKf, dh,dk,dl, 1, &dTheta, &d2Theta);
+ 	}
+ 	catch(const std::exception& ex)
+ 	{
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/test/tst_qr.cpp tastools/tools/test/tst_qr.cpp
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/test/tst_qr.cpp	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/test/tst_qr.cpp	2016-06-18 19:35:58.511943495 +0200
+@@ -1,7 +1,9 @@
+-// gcc -DUSE_LAPACK -o tst_qr tst_qr.cpp ../helper/linalg2.cpp ../helper/log.cpp -std=c++11 -lstdc++ -lm -I/usr/include/lapacke -llapacke -llapack
++// gcc -I../.. -DUSE_LAPACK -o tst_qr tst_qr.cpp ../../tlibs/math/linalg2.cpp ../../tlibs/log/log.cpp -std=c++11 -lstdc++ -lm -I/usr/include/lapacke -llapacke -llapack
+ 
+-#include "../helper/linalg.h"
+-#include "../helper/linalg2.h"
++#include "tlibs/math/linalg.h"
++#include "tlibs/math/linalg2.h"
++
++using namespace tl;
+ 
+ typedef ublas::vector<double> vec;
+ typedef ublas::matrix<double> mat;
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/test/tst_quad.cpp tastools/tools/test/tst_quad.cpp
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/test/tst_quad.cpp	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/test/tst_quad.cpp	2016-06-18 19:38:37.769936834 +0200
+@@ -1,9 +1,11 @@
+-// gcc -I/usr/include/lapacke -o tst_quad tst_quad.cpp ../helper/linalg2.cpp ../helper/log.cpp -lstdc++ -lm -llapacke -llapack -std=c++11
++// gcc -I../.. -I/usr/include/lapacke -o tst_quad tst_quad.cpp ../../tlibs/math/linalg2.cpp ../../tlibs/log/log.cpp -lstdc++ -lm -llapacke -llapack -std=c++11
+ 
+-#include "../helper/linalg.h"
+-#include "../helper/geo.h"
++#include "tlibs/math/linalg.h"
++#include "tlibs/math/geo.h"
+ #include <iostream>
+ 
++using namespace tl;
++
+ int main()
+ {
+ 	QuadEllipsoid<double> elli(1.,2.,3.,4.);
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/test/tst_quat2.cpp tastools/tools/test/tst_quat2.cpp
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/test/tst_quat2.cpp	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/test/tst_quat2.cpp	2016-06-18 19:17:40.394989421 +0200
+@@ -1,9 +1,10 @@
+-// moc-qt5 tst_quat2.cpp > tst_quat2.moc && gcc -fPIC -I/usr/include/qt5 -o tst_quat2 tst_quat2.cpp -lstdc++ -lm -lQt5Core -lQt5Gui -lQt5OpenGL -lQt5Widgets -lGL -std=c++14
++// moc-qt5 tst_quat2.cpp > tst_quat2.moc && gcc -fPIC -I. -I../.. -I/usr/include/qt5 -I/usr/include/freetype2 -o tst_quat2 tst_quat2.cpp -lstdc++ -lm -lQt5Core -lQt5Gui -lQt5OpenGL -lQt5Widgets -lGL -std=c++14
+ 
+ #include <iostream>
+ 
+-#include "../helper/linalg.h"
+-#include "../helper/quat.h"
++#include "tlibs/math/linalg.h"
++#include "tlibs/math/quat.h"
++#include "tlibs/gfx/gl.h"
+ 
+ #include <QtOpenGL/QGLWidget>
+ #include <QtGui/QOpenGLFunctions_2_1>
+@@ -12,6 +13,7 @@
+ #include <QtGui/QGridLayout>
+ #include <QtCore/QTimer>
+ 
++using namespace tl;
+ 
+ typedef ublas::matrix<double, ublas::row_major, ublas::bounded_array<double,4*4>> t_mat4;
+ typedef ublas::matrix<double, ublas::row_major, ublas::bounded_array<double,3*3>> t_mat3;
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/test/tst_quat.cpp tastools/tools/test/tst_quat.cpp
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/test/tst_quat.cpp	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/test/tst_quat.cpp	2016-06-18 19:39:50.755933782 +0200
+@@ -1,9 +1,11 @@
+-// gcc -o tst_quat tst_quat.cpp -lstdc++ -lm -std=c++11
++// gcc -I../.. -o tst_quat tst_quat.cpp -lstdc++ -lm -std=c++11
+ 
+ #include <iostream>
+ 
+-#include "../helper/linalg.h"
+-#include "../helper/quat.h"
++#include "tlibs/math/linalg.h"
++#include "tlibs/math/quat.h"
++
++using namespace tl;
+ 
+ int main()
+ {
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/test/tst_refl.cpp tastools/tools/test/tst_refl.cpp
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/test/tst_refl.cpp	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/test/tst_refl.cpp	2016-06-18 19:42:39.363926730 +0200
+@@ -1,4 +1,4 @@
+-// gcc -DNO_QT -I. -o tst_refl tools/test/tst_refl.cpp libs/spacegroups/spacegroup_clp.cpp libs/spacegroups/crystalsys.cpp tlibs/log/log.cpp -lstdc++ -std=c++11 -lclipper-core -lm
++// gcc -DNO_QT -I. -I../.. -o tst_refl tst_refl.cpp ../../libs/spacegroups/spacegroup_clp.cpp ../../libs/spacegroups/crystalsys.cpp ../../tlibs/log/log.cpp -lstdc++ -std=c++11 -lclipper-core -lm
+ 
+ #include <iostream>
+ #include "libs/spacegroups/spacegroup_clp.h"
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/test/tst_traits.cpp tastools/tools/test/tst_traits.cpp
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/tools/test/tst_traits.cpp	2016-06-14 12:53:37.000000000 +0200
++++ tastools/tools/test/tst_traits.cpp	2016-06-18 19:45:08.899920476 +0200
+@@ -1,9 +1,10 @@
+ #include <iostream>
+ #include <vector>
+ #include <map>
+-#include "../helper/linalg.h"
+-#include "../helper/traits.h"
++#include "tlibs/math/linalg.h"
++#include "tlibs/helper/traits.h"
+ 
++using namespace tl;
+ 
+ int main()
+ {
+diff -ruN tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/ui/reso.ui tastools/ui/reso.ui
+--- tastools-140ee953e1c95f69b23f4a514c918537d5b68a0a/ui/reso.ui	2016-06-14 12:53:37.000000000 +0200
++++ tastools/ui/reso.ui	2016-06-18 17:18:44.080287882 +0200
+@@ -6,8 +6,8 @@
+    <rect>
+     <x>0</x>
+     <y>0</y>
+-    <width>741</width>
+-    <height>395</height>
++    <width>752</width>
++    <height>406</height>
+    </rect>
+   </property>
+   <property name="windowTitle">
+@@ -72,7 +72,7 @@
+    <item row="0" column="0" colspan="4">
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="currentIndex">
+-      <number>4</number>
++      <number>5</number>
+      </property>
+      <widget class="QWidget" name="tabCN">
+       <attribute name="title">
+@@ -2338,6 +2338,154 @@
+        </item>
+       </layout>
+      </widget>
++     <widget class="QWidget" name="tab">
++      <attribute name="title">
++       <string>Simple</string>
++      </attribute>
++      <layout class="QGridLayout" name="gridLayout_16">
++       <item row="0" column="0">
++        <widget class="QGroupBox" name="groupBox_26">
++         <property name="title">
++          <string>Deviation in k_i</string>
++         </property>
++         <layout class="QFormLayout" name="formLayout_7">
++          <property name="horizontalSpacing">
++           <number>2</number>
++          </property>
++          <property name="verticalSpacing">
++           <number>2</number>
++          </property>
++          <property name="margin">
++           <number>4</number>
++          </property>
++          <item row="0" column="0">
++           <widget class="QLabel" name="label_4">
++            <property name="text">
++             <string>In Plane:</string>
++            </property>
++           </widget>
++          </item>
++          <item row="0" column="1">
++           <widget class="QDoubleSpinBox" name="spinSigKi">
++            <property name="suffix">
++             <string> /Å</string>
++            </property>
++            <property name="decimals">
++             <number>4</number>
++            </property>
++            <property name="singleStep">
++             <double>0.010000000000000</double>
++            </property>
++            <property name="value">
++             <double>0.100000000000000</double>
++            </property>
++           </widget>
++          </item>
++          <item row="1" column="0">
++           <widget class="QLabel" name="label_5">
++            <property name="text">
++             <string>Out of Plane:</string>
++            </property>
++           </widget>
++          </item>
++          <item row="1" column="1">
++           <widget class="QDoubleSpinBox" name="spinSigKi_z">
++            <property name="suffix">
++             <string> /Å</string>
++            </property>
++            <property name="decimals">
++             <number>4</number>
++            </property>
++            <property name="singleStep">
++             <double>0.010000000000000</double>
++            </property>
++            <property name="value">
++             <double>0.100000000000000</double>
++            </property>
++           </widget>
++          </item>
++         </layout>
++        </widget>
++       </item>
++       <item row="0" column="1">
++        <widget class="QGroupBox" name="groupBox_27">
++         <property name="title">
++          <string>Deviation in k_f</string>
++         </property>
++         <layout class="QFormLayout" name="formLayout_9">
++          <property name="horizontalSpacing">
++           <number>2</number>
++          </property>
++          <property name="verticalSpacing">
++           <number>2</number>
++          </property>
++          <property name="margin">
++           <number>4</number>
++          </property>
++          <item row="0" column="0">
++           <widget class="QLabel" name="label_6">
++            <property name="text">
++             <string>In Plane:</string>
++            </property>
++           </widget>
++          </item>
++          <item row="0" column="1">
++           <widget class="QDoubleSpinBox" name="spinSigKf">
++            <property name="suffix">
++             <string> /Å</string>
++            </property>
++            <property name="decimals">
++             <number>4</number>
++            </property>
++            <property name="singleStep">
++             <double>0.010000000000000</double>
++            </property>
++            <property name="value">
++             <double>0.100000000000000</double>
++            </property>
++           </widget>
++          </item>
++          <item row="1" column="0">
++           <widget class="QLabel" name="label_7">
++            <property name="text">
++             <string>Out of Plane:</string>
++            </property>
++           </widget>
++          </item>
++          <item row="1" column="1">
++           <widget class="QDoubleSpinBox" name="spinSigKf_z">
++            <property name="suffix">
++             <string> /Å</string>
++            </property>
++            <property name="decimals">
++             <number>4</number>
++            </property>
++            <property name="singleStep">
++             <double>0.010000000000000</double>
++            </property>
++            <property name="value">
++             <double>0.100000000000000</double>
++            </property>
++           </widget>
++          </item>
++         </layout>
++        </widget>
++       </item>
++       <item row="1" column="0" colspan="3">
++        <spacer name="verticalSpacer_5">
++         <property name="orientation">
++          <enum>Qt::Vertical</enum>
++         </property>
++         <property name="sizeHint" stdset="0">
++          <size>
++           <width>488</width>
++           <height>225</height>
++          </size>
++         </property>
++        </spacer>
++       </item>
++      </layout>
++     </widget>
+      <widget class="QWidget" name="tabCalc">
+       <attribute name="title">
+        <string>Calculation</string>
